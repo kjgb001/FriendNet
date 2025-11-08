@@ -70,15 +70,15 @@ pytest
 
 ## Developer Notes
 
-The project is fully type-hinted (mypy compatible).
+- The project is fully type-hinted (mypy compatible).
 
-Visualization modules are pluggable — you can swap MatplotlibVisualizer for PygameVisualizer.
+- Visualization modules are pluggable — you can swap MatplotlibVisualizer for PygameVisualizer.
 
-pytest is used internally for autograding, but students write their own tests with unittest.
+- pytest is used internally for autograding, but students write their own tests with unittest.
 
-Logging replaces all print statements for professional debugging.
+- Logging replaces all print statements for professional debugging.
 
-The FriendNet/FriendNet_student subdirectory is the student facing version, ready for use in the classroom.
+- The FriendNet/FriendNet_student subdirectory is the student facing version, ready for use in the classroom.
 
 # License
 
