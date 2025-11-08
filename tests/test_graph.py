@@ -1,5 +1,5 @@
-from friendnet.core.graph import *
-from friendnet.core.node import *
+from core.graph import *
+from core.node import *
 import pytest
 import logging
 
