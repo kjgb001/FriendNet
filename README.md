@@ -83,7 +83,7 @@ pytest
 # License
 
 MIT License © 2025 Kellan Guinn-Bailey
-See LICENSE for details
+See the [MIT License](https://github.com/kjgb001/FriendNet/blob/main/LICENSE) for details
 
 # Attribution
 
