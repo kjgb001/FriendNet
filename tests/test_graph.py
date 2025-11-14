@@ -1,4 +1,4 @@
-from core.graph import *
+from core.matrixGraph import *
 from core.node import *
 import pytest
 import logging
@@ -6,9 +6,21 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-matrixGraph = MatrixGraph(["A", "B", "C"], [[0,1],[1,2],[2,0]])
+@pytest.fixture
+def matrixGraph():
+    return MatrixGraph(["A", "B", "C"], [[0,1],[1,2],[2,0]])
 
-def test_basic_matrix_graph_init():
+@pytest.fixture
+def u_matrixGraph():
+    return U_MatrixGraph(["A", "B", "C"], [[0,1],[1,2],[2,0]])
+
+'''
+@pytest.mark.parametrize("MatrixGraph", [
+    matrixGraph
+])
+'''
+
+def test_basic_matrix_graph_init(matrixGraph):
     assert matrixGraph.vertices == ["A", "B", "C"]
     assert matrixGraph.matrix[0][1] == 1 
     assert matrixGraph.matrix[1][2] == 1
@@ -18,7 +30,7 @@ def test_basic_matrix_graph_init():
     #logger.info("\n" + str(matrixGraph))
     
 
-def test_basic_matrix_graph_add_vertex():
+def test_basic_matrix_graph_add_vertex(matrixGraph):
     matrixGraph.add_vertex("D")
     
     assert matrixGraph.vertices == ["A", "B", "C", "D"]
@@ -28,30 +40,33 @@ def test_basic_matrix_graph_add_vertex():
     logger.info("\n" + str(matrixGraph))
 
 
-def test_basic_matrix_graph_remove_vertex():
+def test_basic_matrix_graph_remove_vertex(matrixGraph):
+    matrixGraph.add_vertex("D")
     matrixGraph.remove_vertex("D")
 
     assert matrixGraph.vertices == ["A", "B", "C", None]
     assert matrixGraph.matrix[0][3] == None
     assert matrixGraph.vertices[3] == None
 
-    matrixGraph.add_vertex("D")
-    matrixGraph.remove_vertex("D")
-
-    assert matrixGraph.vertices == ["A", "B", "C", None, None]
-    assert matrixGraph.matrix[0][4] == None
-    assert matrixGraph.vertices[4] == None
-
     logger.info("\n" + str(matrixGraph))
 
 
-def test_basic_matrix_graph_remove_edge():
+def test_basic_matrix_graph_add_edge(matrixGraph):
+    matrixGraph.add_edge(0,2)
+
+    assert matrixGraph.matrix[0][2] == 1
+    assert [0,2] in matrixGraph.edges
+
+
+def test_basic_matrix_graph_remove_edge(matrixGraph):
     matrixGraph.remove_edge(0,1)
 
     assert matrixGraph.matrix[0][1] == 0 
     assert matrixGraph.matrix[1][2] == 1
     assert matrixGraph.matrix[2][0] == 1 
     assert matrixGraph.matrix[0][2] == 0 
+
+    assert [0,1] not in matrixGraph.edges
 
     assert len(matrixGraph.edges) == 2
 
@@ -68,5 +83,39 @@ def test_basic_matrix_graph_check_edges():
         incorrectMatrixGraph = MatrixGraph(["A", "B", "C"], [3,0])
 
     incorrectMatrixGraph = MatrixGraph(["A", "B", "C"], None)
+
+
+def test_undirected_matrix_graph_undirectedness(u_matrixGraph):
+
+    assert u_matrixGraph.matrix[0][1] == 1
+    assert u_matrixGraph.matrix[1][0] == 1
+    assert u_matrixGraph.matrix[1][2] == 1
+    assert u_matrixGraph.matrix[2][1] == 1
+    assert u_matrixGraph.matrix[0][2] == 1
+    assert u_matrixGraph.matrix[2][0] == 1
+
+
+def test_undirected_matrix_graph_add_edge(u_matrixGraph):
+    u_matrixGraph.add_vertex("D")
+    u_matrixGraph.add_edge(0,3)
+
+    assert u_matrixGraph.matrix[0][3] == 1
+    assert u_matrixGraph.matrix[3][0] == 1
+
+    assert [0,3] in u_matrixGraph.edges
+
+
+def test_undirected_matrix_graph_remove_edge(u_matrixGraph):
+    u_matrixGraph.remove_edge(0,1)
+
+    assert u_matrixGraph.matrix[0][1] == 0 
+    assert u_matrixGraph.matrix[1][2] == 1
+    assert u_matrixGraph.matrix[2][0] == 1 
+    assert u_matrixGraph.matrix[1][0] == 0 
+
+    assert [0,1] not in u_matrixGraph.edges
+
+    assert len(u_matrixGraph.edges) == 2
+
 
 logger.info("\n" + str(matrixGraph))

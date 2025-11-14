@@ -1,8 +1,9 @@
 from typing import Any
 from .node import *
+from .graphInterface import GraphInterface
 import numbers
 
-class MatrixGraph:
+class MatrixGraph(GraphInterface):
     '''
     Basic directed graph structure using a 2D matrix (nested lists) to store edges.
     Serves as the parent class for undirected, weighted, and acyclic graph variants.
@@ -10,14 +11,17 @@ class MatrixGraph:
     of integers representing the indexes of two vertices.
     '''
     # Could rewrite class to allow either index based OR vertex object based edges
-    def __init__(self, vertices: list, edges: list[list[int]] | None = None) -> None:
+    def __init__(self, vertices: list, edges: list[list[int]] | None, weights: dict = None) -> None:
         if edges is None:
             edges = []
         
         self.vertices = self._check_vertices(vertices)
         self.edges = self._check_edges(edges)
-        self.matrix: list[list[int]] = None
+        
+        # Create square 2D matrix of zeros based on number of vertices.
+        self.matrix = [[0 for _ in range(len(self.vertices))] for _ in range(len(self.vertices))]
 
+        # Create dict to track the index of each vertex.
         self._index_map = {vertex: i for i, vertex in enumerate(self.vertices)}
 
         self._populate_matrix()
@@ -28,14 +32,11 @@ class MatrixGraph:
         Helper function to set starting values of the matrix according to
         the vertices and edges passed as arguments during initialization.
         '''
-        # Create square 2D matrix of zeros based on number of vertices.
-        self.matrix = [[0 for _ in range(len(self.vertices))] for _ in range(len(self.vertices))]
-
         # Assign 1 to each matrix coordinate listed in edges to represent directional connection.
         for i in self.edges:
             y = i[0]
             x = i[1]
-            self.matrix[y][x] = 1
+            self.add_edge(y, x)
 
     
     def _check_vertices(self, vertices: list):
@@ -98,7 +99,7 @@ class MatrixGraph:
         self.matrix.append([0 for _ in range(len(self.vertices))])
 
     
-    def remove_vertex(self, vertex):
+    def remove_vertex(self, vertex: Any):
         '''
         Removes a vertex by finding the index if vertex param not an int
         then calling _remove_vertex_by_index. Vertex param can be either an
@@ -135,23 +136,22 @@ class MatrixGraph:
         self.vertices[index] = None
 
     
-    def _vertex_index(self, v1, v2) -> list[int]:
+    def _vertex_index(self, vertex) -> int:
         '''Return index of vertex object, raise if not found.'''
         try:
-            v1 = self._index_map[v1] if not isinstance(v1, int) else v1
-            v2 = self._index_map[v2] if not isinstance(v2, int) else v2
+            vertex = self._index_map[vertex] if not isinstance(vertex, int) else vertex
 
-            return [v1, v2]
+            return vertex
 
         except KeyError as e:
-            raise ValueError(f"One or both vertices not found in graph.") from e
+            raise ValueError(f"Vertex not found in graph.") from e
 
 
-    def add_edge(self, v1, v2):
-        '''Adds a single edge to the graph. Both vertex args must either be an int
+    def add_edge(self, v1, v2, weight = None):
+        '''Adds a single directed edge to the graph: v1 -> v2. Both vertex args must either be an int
         representing the index of the vertex OR an object/value currently stored as a vertex.'''
         # Convert objects to indices if necessary
-        edge = self._vertex_index(v1, v2)
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
 
         # Checks edge validity
         self._check_edge(edge)
@@ -159,26 +159,26 @@ class MatrixGraph:
         if edge not in self.edges:
             self.edges.append(edge)
 
-            # Set value at edge cooridinate to one to represent connection.
-            self.matrix[edge[0]][edge[1]] = 1
+        # Set value at edge cooridinate to one to represent connection.
+        self.matrix[edge[0]][edge[1]] = 1
 
 
     def remove_edge(self, v1, v2):
         '''Removes an edge from the graph. Both vertex args must either be an int
         representing the index of the vertex OR an object/value currently stored as a vertex.'''
         # Convert objects to indices if necessary
-        edge = self._vertex_index(v1, v2)
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
         
         # Checks edge validity
         self._check_edge(edge)
-
-        # Set value at edge cooridinate to zero to represent no connection.
-        self.matrix[edge[0]][edge[1]] = 0
 
         # Iterate through edges to find match
         for e in self.edges[:]:
             if e == edge:
                 self.edges.remove(e)
+
+        # Set value at edge cooridinate to zero to represent no connection.
+        self.matrix[edge[0]][edge[1]] = 0
 
     
     def get_matrix(self) -> list[list[int]]:
@@ -206,3 +206,102 @@ class MatrixGraph:
         return f"{header}\n" + "\n".join(rows) + (
             f"\n\nVertices: {len(active)}, Edges: {len(self.edges)}"
         )
+
+
+
+class U_MatrixGraph(MatrixGraph):
+    
+    def _populate_matrix(self):
+        '''
+        Helper function to set starting values of the matrix according to
+        the vertices and edges passed as arguments during initialization.
+        '''
+
+        # Assign 1 to each matrix coordinate listed in edges to represent directional connection.
+        for i in self.edges:
+            y = i[0]
+            x = i[1]
+            self.add_edge(y, x)
+
+    
+    def add_edge(self, v1, v2, weight = None):
+        '''Adds a single directed edge to the graph: v1 -> v2. Both vertex args must either be an int
+        representing the index of the vertex OR an object/value currently stored as a vertex.'''
+        # Convert objects to indices if necessary
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
+
+        # Create mirrored edge list
+        edge_mirror = [edge[1], edge[0]]
+
+        # Checks edge validity
+        self._check_edge(edge)
+
+        if edge not in self.edges and edge_mirror not in self.edges:
+            self.edges.append(edge)
+
+        # Set value at edge cooridinate to one to represent connection.
+        self.matrix[edge[0]][edge[1]] = 1
+        self.matrix[edge[1]][edge[0]] = 1
+
+
+    def remove_edge(self, v1, v2):
+        '''Removes an edge from the graph. Both vertex args must either be an int
+        representing the index of the vertex OR an object/value currently stored as a vertex.'''
+        # Convert objects to indices if necessary
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
+
+        # Create mirrored edge list
+        edge_mirror = [edge[1], edge[0]]
+        
+        # Checks edge validity
+        self._check_edge(edge)
+
+        # Iterate through edges to find match for removal
+        for e in self.edges[:]:
+            if e == edge or e == edge_mirror:
+                self.edges.remove(e)
+
+        # Set value at edge cooridinate to zero to represent no connection.
+        self.matrix[edge[0]][edge[1]] = 0
+        self.matrix[edge[1]][edge[0]] = 0
+
+
+class W_MatrixGraph(MatrixGraph):
+    
+    def __init__(self, vertices: list, edges: list[list[int]] | None, weights: dict) -> None:
+        super().__init__(self, vertices, edges, weights)
+
+        self.weights = self._check_weights(weights)
+
+
+    def _check_weights(weights: dict):
+        if len(weights) != len(self.edges):
+            raise ValueError("Number of weigths != number of edges. Every edge must have a weight.")
+
+        for edge, weight in weights.items():
+            self._check_weight(edge, weight)
+
+    
+    def _check_weight(edge, weight):
+        if not isinstance(weight, float):
+            raise TypeError(f"Weight must be a number, got {type(weight).__name__}.")
+
+        if weight < -1 or weight > 1:
+            raise ValueError(f"Weight {weight} is out of allowed range [-1, 1].")
+
+        if len(edge) > 2 or not isinstance(edge, tuple):
+            raise TypeError("Weight entries must have tuple keys of two vertices")
+
+        list_edge = [self._vertex_index(edge[0]), self._vertex_index(edge[1])]
+        self._check_edge(list_edge)
+
+    def _populate_matrix(self):
+        '''
+        Helper function to set starting values of the matrix according to
+        the vertices and edges passed as arguments during initialization.
+        '''
+        # Assign 1 to each matrix coordinate listed in edges to represent directional connection.
+        for i in self.edges:
+            y = i[0]
+            x = i[1]
+            self.add_edge(y, x)
