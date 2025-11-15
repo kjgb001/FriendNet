@@ -269,31 +269,21 @@ class U_MatrixGraph(MatrixGraph):
 class W_MatrixGraph(MatrixGraph):
     
     def __init__(self, vertices: list, edges: list[list[int]] | None, weights: dict) -> None:
-        super().__init__(self, vertices, edges, weights)
-
+        if edges is None:
+            edges = []
+        
+        self.vertices = self._check_vertices(vertices)
+        self.edges = self._check_edges(edges)
         self.weights = self._check_weights(weights)
+        
+        # Create square 2D matrix of zeros based on number of vertices.
+        self.matrix = [[0 for _ in range(len(self.vertices))] for _ in range(len(self.vertices))]
 
+        # Create dict to track the index of each vertex.
+        self._index_map = {vertex: i for i, vertex in enumerate(self.vertices)}
 
-    def _check_weights(weights: dict):
-        if len(weights) != len(self.edges):
-            raise ValueError("Number of weigths != number of edges. Every edge must have a weight.")
+        self._populate_matrix()
 
-        for edge, weight in weights.items():
-            self._check_weight(edge, weight)
-
-    
-    def _check_weight(edge, weight):
-        if not isinstance(weight, float):
-            raise TypeError(f"Weight must be a number, got {type(weight).__name__}.")
-
-        if weight < -1 or weight > 1:
-            raise ValueError(f"Weight {weight} is out of allowed range [-1, 1].")
-
-        if len(edge) > 2 or not isinstance(edge, tuple):
-            raise TypeError("Weight entries must have tuple keys of two vertices")
-
-        list_edge = [self._vertex_index(edge[0]), self._vertex_index(edge[1])]
-        self._check_edge(list_edge)
 
     def _populate_matrix(self):
         '''
@@ -304,4 +294,89 @@ class W_MatrixGraph(MatrixGraph):
         for i in self.edges:
             y = i[0]
             x = i[1]
-            self.add_edge(y, x)
+            w = self.weights[(y, x)]
+            self.add_edge(y, x, w)
+
+
+    def _check_weights(self, weights: dict):
+        if len(weights) != len(self.edges):
+            raise ValueError("Number of weigths != number of edges. Every edge must have a weight.")
+
+        for edge, weight in weights.items():
+            self._check_weight(edge, weight)
+
+        return weights
+
+    
+    def _check_weight(self, edge, weight):
+        if not isinstance(weight, float):
+            raise TypeError(f"Weight must be a number, got {type(weight).__name__}.")
+
+        if weight < 1 or weight > 2:
+            raise ValueError(f"Weight {weight} is out of allowed range [-1, 1].")
+
+        if len(edge) > 2 or not isinstance(edge, tuple):
+            raise TypeError("Weight entries must have tuple keys of two vertices")
+
+        if not isinstance(edge, list):
+            list_edge = [self._vertex_index(edge[0]), self._vertex_index(edge[1])]
+
+        self._check_edge(list_edge)
+
+
+    def add_edge(self, v1, v2, weight: float):
+        '''Adds a single directed edge to the graph: v1 -> v2. Both vertex args must either be an int
+        representing the index of the vertex OR an object/value currently stored as a vertex.'''
+        # Convert objects to indices if necessary
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
+
+        # Checks weighted edge validity
+        tuple_edge = (self._vertex_index(edge[0]), self._vertex_index(edge[1]))
+        self._check_weight(tuple_edge, weight)
+
+        if edge not in self.edges:
+            self.edges.append(edge)
+
+        # Set value at edge cooridinate to weighted value to represent connection.
+        self.matrix[edge[0]][edge[1]] = weight
+
+
+class WU_MatrixGraph(W_MatrixGraph):
+
+    def add_edge(self, v1, v2, weight):
+        '''Adds a single directed edge to the graph: v1 -> v2. Both vertex args must either be an int
+        representing the index of the vertex OR an object/value currently stored as a vertex.'''
+        # Convert objects to indices if necessary
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
+
+        # Checks weighted edge validity
+        tuple_edge = (self._vertex_index(edge[0]), self._vertex_index(edge[1]))
+        self._check_weight(tuple_edge, weight)
+
+        if edge not in self.edges and edge_mirror not in self.edges:
+            self.edges.append(edge)
+
+        # Set value at edge cooridinate to one to represent connection.
+        self.matrix[edge[0]][edge[1]] = weight
+        self.matrix[edge[1]][edge[0]] = weight
+
+    def remove_edge(self, v1, v2):
+        '''Removes an edge from the graph. Both vertex args must either be an int
+        representing the index of the vertex OR an object/value currently stored as a vertex.'''
+        # Convert objects to indices if necessary
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
+
+        # Create mirrored edge list
+        edge_mirror = [edge[1], edge[0]]
+        
+        # Checks edge validity
+        self._check_edge(edge)
+
+        # Iterate through edges to find match for removal
+        for e in self.edges[:]:
+            if e == edge or e == edge_mirror:
+                self.edges.remove(e)
+
+        # Set value at edge cooridinate to zero to represent no connection.
+        self.matrix[edge[0]][edge[1]] = 0
+        self.matrix[edge[1]][edge[0]] = 0

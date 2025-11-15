@@ -14,6 +14,15 @@ def matrixGraph():
 def u_matrixGraph():
     return U_MatrixGraph(["A", "B", "C"], [[0,1],[1,2],[2,0]])
 
+@pytest.fixture
+def w_matrixGraph():
+    return W_MatrixGraph(["A", "B", "C"], [[0,1],[1,2],[2,0]], {(0,1): 1.0, (1,2): 2.0, (2,0): 1.5})
+
+@pytest.fixture
+def wu_matrixGraph():
+    return WU_MatrixGraph(["A", "B", "C"], [[0,1],[1,2],[2,0]], {(0,1): 1.0, (1,2): 2.0, (2,0): 1.5})
+
+
 '''
 @pytest.mark.parametrize("MatrixGraph", [
     matrixGraph
@@ -117,5 +126,28 @@ def test_undirected_matrix_graph_remove_edge(u_matrixGraph):
 
     assert len(u_matrixGraph.edges) == 2
 
+
+def test_weighted_matrix_graph_init(w_matrixGraph):
+
+    assert w_matrixGraph.matrix[0][1] == 1.0
+    assert w_matrixGraph.matrix[1][2] == 2.0
+    assert w_matrixGraph.matrix[2][0] == 1.5
+
+
+def test_weighted_matrix_graph_add_edge(w_matrixGraph):
+    w_matrixGraph.add_edge(0,2,1.5)
+
+    assert w_matrixGraph.matrix[0][2] == 1.5
+    assert [0,2] in w_matrixGraph.edges
+
+
+def test_weighted_undirected_matrix_graph_undirectedness(wu_matrixGraph):
+
+    assert wu_matrixGraph.matrix[0][1] == 1.0
+    assert wu_matrixGraph.matrix[1][0] == 1.0
+    assert wu_matrixGraph.matrix[1][2] == 2.0
+    assert wu_matrixGraph.matrix[2][1] == 2.0
+    assert wu_matrixGraph.matrix[0][2] == 1.5
+    assert wu_matrixGraph.matrix[2][0] == 1.5
 
 logger.info("\n" + str(matrixGraph))
