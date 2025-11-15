@@ -11,7 +11,10 @@ class MatrixGraph(GraphInterface):
     of integers representing the indexes of two vertices.
     '''
     # Could rewrite class to allow either index based OR vertex object based edges
-    def __init__(self, vertices: list, edges: list[list[int]] | None, weights: dict = None) -> None:
+    def __init__(self, vertices: list | None, edges: list[list[int]] | None, weights: dict = None) -> None:
+        if vertices == None:
+            vertices = []
+        
         if edges is None:
             edges = []
         
@@ -185,29 +188,6 @@ class MatrixGraph(GraphInterface):
         '''Return a copy of the matrix'''
         return [row[:] for row in self.matrix]
 
-      
-    def __str__(self):
-        # Could dynamically pad instead of hard coding 5
-        if not self.vertices:
-            return "[Empty Graph]"
-
-        # Filter to live vertices
-        active = [(i, v) for i, v in enumerate(self.vertices) if v is not None]
-
-        header = "    " + " ".join(f"{v:>5}" for _, v in active)
-        rows = []
-        for i, v in active:
-            # Only include columns for active vertices
-            row_vals = [
-                f"{self.matrix[i][j]:>5}" 
-                for j, col_v in enumerate(self.vertices) if col_v is not None
-            ]
-            rows.append(f"{v:>3} " + " ".join(row_vals))
-        return f"{header}\n" + "\n".join(rows) + (
-            f"\n\nVertices: {len(active)}, Edges: {len(self.edges)}"
-        )
-
-
 
 class U_MatrixGraph(MatrixGraph):
     
@@ -269,8 +249,14 @@ class U_MatrixGraph(MatrixGraph):
 class W_MatrixGraph(MatrixGraph):
     
     def __init__(self, vertices: list, edges: list[list[int]] | None, weights: dict) -> None:
+        if vertices == None:
+            vertices = []
+        
         if edges is None:
             edges = []
+
+        if weights is None:
+            weights = {}
         
         self.vertices = self._check_vertices(vertices)
         self.edges = self._check_edges(edges)

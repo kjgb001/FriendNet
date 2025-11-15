@@ -1,4 +1,6 @@
-from core.graph import *
+#!/usr/bin/env python3
 
-matrixGraph = MatrixGraph(["A"])
-print(matrixGraph)
+from cli.cli import main
+
+if __name__ == "__main__":
+    main()
