@@ -13,7 +13,10 @@ def main():
     else:
         load_list = args.load.split(",")
 
+    # Use args to set graph types
     graphs = build_graphs(args.rep, load_list)
+
+    # Call build_network here once profile generation and preloaded network setups are ready
 
     parser = Parser()
     interface = Interface(graphs, parser)
@@ -39,7 +42,6 @@ def parse_arguments():
     return parser.parse_args()
 
 
-
 def build_graphs(rep, load_list):
     graphs = {}
 
@@ -63,3 +65,9 @@ def build_graphs(rep, load_list):
     # Add DAG once implemented
 
     return graphs
+
+
+def build_network():
+    # Should create/use fully featured persons and semi/psuedo-randomly 
+    # generate a network based on available graphs
+    pass

@@ -1,5 +1,6 @@
 
 class Parser:
+    ''' Parses raw cli input. Returns the command and arguments as a tuple. '''
     def parse(self, raw):
         tokens = raw.strip().split()
 
