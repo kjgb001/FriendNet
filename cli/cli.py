@@ -68,6 +68,12 @@ def build_graphs(rep, load_list):
 
 
 def build_network():
-    # Should create/use fully featured persons and semi/psuedo-randomly 
-    # generate a network based on available graphs
+    ''' TODO: Should create/use fully featured persons and semi/psuedo-randomly 
+     generate a network based on available graphs and users. Automatically uses
+     pre-generated static user-list unless --gen arg passed at run.
+     If weighted graphs present, trust levels (Weighted Directed Graph) 
+     should be set based on friendship levels as a baseline according to a logarithmic function.
+     Should use the interface to execute commands as needed while blocking prints.
+     '''
+
     pass

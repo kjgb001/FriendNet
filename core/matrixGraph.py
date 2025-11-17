@@ -82,13 +82,13 @@ class MatrixGraph(GraphInterface):
 
         for i in edge:
             if not 0 <= i < len(self.vertices):
-                raise ValueError(f"Edge index {i} out of range for vertices {len(self.vertices)}")
+                raise ValueError(f"Edge index {i} out of range for vertices {len(self.vertices)}.")
 
         
     def add_vertex(self, vertex: Any):
         '''Adds a single vertex to the graph. A vertex can be any object type.'''
         if vertex in self.vertices:
-            raise ValueError(f"Vertex {vertex!r} already exists")
+            raise ValueError(f"Vertex {vertex!r} already exists.")
 
         self.vertices.append(vertex)
         self._index_map[vertex] = len(self.vertices) - 1
@@ -111,9 +111,9 @@ class MatrixGraph(GraphInterface):
         # Check that entered vertex param is valid
         if isinstance(vertex, int):
             if vertex < 0 or vertex >= len(self.vertices):
-                raise IndexError("Vertex index out of range")
+                raise IndexError("Vertex index out of range.")
         elif vertex not in self.vertices:
-            raise ValueError(f"Vertex {vertex!r} not found")
+            raise ValueError(f"Vertex {vertex!r} not found.")
 
         # Sets the vertex variable to the corresponding index if needed
         if not isinstance(vertex, int):
@@ -187,6 +187,14 @@ class MatrixGraph(GraphInterface):
     def get_matrix(self) -> list[list[int]]:
         '''Return a copy of the matrix'''
         return [row[:] for row in self.matrix]
+
+    
+    def get_edge(self, v1, v2):
+
+        # Convert objects to indices if necessary
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
+
+        return self.matrix[edge[0]][edge[1]]
 
 
 class U_MatrixGraph(MatrixGraph):
@@ -299,10 +307,10 @@ class W_MatrixGraph(MatrixGraph):
             raise TypeError(f"Weight must be a number, got {type(weight).__name__}.")
 
         if weight < 1 or weight > 2:
-            raise ValueError(f"Weight {weight} is out of allowed range [-1, 1].")
+            raise ValueError(f"Weight {weight} is out of allowed range [1, 2].")
 
         if len(edge) > 2 or not isinstance(edge, tuple):
-            raise TypeError("Weight entries must have tuple keys of two vertices")
+            raise TypeError("Weight entries must have tuple keys of two vertices.")
 
         if not isinstance(edge, list):
             list_edge = [self._vertex_index(edge[0]), self._vertex_index(edge[1])]
@@ -325,6 +333,42 @@ class W_MatrixGraph(MatrixGraph):
 
         # Set value at edge cooridinate to weighted value to represent connection.
         self.matrix[edge[0]][edge[1]] = weight
+
+
+    def strengthen_edge(self, v1, v2, weight: float):
+        # Convert objects to indices if necessary
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
+
+        if weight <= 0.0 or weight > 1.0:
+            raise ValueError("Weight strengthen value must be a float value greater than zero and less than or equal to one.")
+
+        # Increment edge weights
+        self.matrix[edge[0]][edge[1]] += weight
+
+        if self.matrix[edge[0]][edge[1]] > 2.0:
+            self.matrix[edge[0]][edge[1]] = 2.0
+
+        # Checks weighted edge validity
+        tuple_edge = (self._vertex_index(edge[0]), self._vertex_index(edge[1]))
+        self._check_weight(tuple_edge, self.matrix[edge[0]][edge[1]])
+
+    
+    def weaken_edge(self, v1, v2, weight: float):
+        # Convert objects to indices if necessary
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
+
+        if weight <= 0.0 or weight > 1.0:
+            raise ValueError("Weight weaken value must be a float value greater than zero and less than or equal to one.")
+
+        # Decrement edge weights
+        self.matrix[edge[0]][edge[1]] -= weight
+
+        if self.matrix[edge[0]][edge[1]] < 1.0:
+            self.matrix[edge[0]][edge[1]] = 1.0
+
+        # Checks weighted edge validity
+        tuple_edge = (self._vertex_index(edge[0]), self._vertex_index(edge[1]))
+        self._check_weight(tuple_edge, self.matrix[edge[0]][edge[1]])
 
 
 class WU_MatrixGraph(W_MatrixGraph):
@@ -366,3 +410,44 @@ class WU_MatrixGraph(W_MatrixGraph):
         # Set value at edge cooridinate to zero to represent no connection.
         self.matrix[edge[0]][edge[1]] = 0
         self.matrix[edge[1]][edge[0]] = 0
+
+
+    def strengthen_edge(self, v1, v2, weight: float):
+        # Convert objects to indices if necessary
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
+
+        if weight <= 0.0 or weight > 1.0:
+            raise ValueError("Weight strengthen value must be a float value greater than zero and less than or equal to one.")
+
+        # Increment edge weights
+        self.matrix[edge[0]][edge[1]] += weight
+        self.matrix[edge[1]][edge[0]] += weight
+
+        if self.matrix[edge[0]][edge[1]] > 2.0:
+            self.matrix[edge[0]][edge[1]] = 2.0
+            self.matrix[edge[1]][edge[0]] = 2.0
+
+        # Checks weighted edge validity
+        tuple_edge = (self._vertex_index(edge[0]), self._vertex_index(edge[1]))
+        self._check_weight(tuple_edge, self.matrix[edge[0]][edge[1]])
+
+    
+    def weaken_edge(self, v1, v2, weight: float):
+        # Convert objects to indices if necessary
+        edge = [self._vertex_index(v1), self._vertex_index(v2)]
+
+        if weight <= 0.0 or weight > 1.0:
+            raise ValueError("Weight weaken value must be a float value greater than zero and less than or equal to one.")
+
+        # Decrement edge weights
+        self.matrix[edge[0]][edge[1]] -= weight
+        self.matrix[edge[1]][edge[0]] -= weight
+
+        if self.matrix[edge[0]][edge[1]] < 1.0:
+            self.matrix[edge[0]][edge[1]] = 1.0
+            self.matrix[edge[1]][edge[0]] = 1.0
+
+        # Checks weighted edge validity
+        tuple_edge = (self._vertex_index(edge[0]), self._vertex_index(edge[1]))
+        self._check_weight(tuple_edge, self.matrix[edge[0]][edge[1]])
+

@@ -8,17 +8,20 @@ COMMAND_MAP = {
     "kill": remove_person,
     "connect": connect,
     "disconnect": disconnect,
-    #"strengthen": strengthen_edge,
-    #"weaken": weaken_edge,
+    "strengthen": strengthen_edge,
+    "weaken": weaken_edge,
+    "trust": strengthen_trust,
+    "distrust": weaken_trust,
+
     #"spread": spread_rumor
     "help": help_user
     
-    # add more commands here
+    # add more commands
 }
 
 UNDIRECTED_COMMANDS = ["connect", "disconnect"]
 DIRECTED_COMMANDS = []
-WEIGHTED_COMMANDS = []
+WEIGHTED_COMMANDS = ["strengthen", "weaken", "trust", "distrust"]
 DAG_COMMANDS = []
 
 

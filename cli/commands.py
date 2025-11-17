@@ -20,16 +20,62 @@ def connect(graphs, a, b, weight = None):
     # Check which type of graph is used for friends, then add edge
     if isinstance(graphs["friends"], U_MatrixGraph):
         graphs["friends"].add_edge(a, b)
+        print(f"{a} and {b} are now friends!")
     else:
         graphs["friends"].add_edge(a, b, weight)
 
-    print(f"{a} and {b} are now friends!")
+        if weight:
+            if weight > 1.5:
+                print(f"{a} and {b} are now friends!")
+            elif weight < 1.5:
+                print(f"{a} and {b} are now enemies.")
+            else:
+                print(f"{a} and {b} are now acquainted.")
 
 
 def disconnect(graphs, a, b):
     graphs["friends"].remove_edge(a, b)
 
-    print(f"{a} and {b} are no longer friends.")
+    print(f"{a} and {b} are no longer acquainted.")
+
+
+def strengthen_edge(graphs, a, b, weight):
+
+    if graphs["friends"].get_edge(a, b) == 2.0:
+        print(f"{a} and {b} are already best friends!")
+        return
+
+    graphs["friends"].strengthen_edge(a, b, weight)
+
+    if graphs["friends"].get_edge(a, b) == 2.0:
+        print(f"{a} and {b} are now best friends!")
+    elif graphs["friends"].get_edge(a, b) == 1.5:
+        print(f"{a} and {b} have a neutral relationship.")
+    elif graphs["friends"].get_edge(a, b) > 1.5:
+        print(f"{a} and {b} are now better friends!")
+    else:
+        print(f"{a} and {b} still dislike each other.")
+
+
+def weaken_edge(graphs, a, b, weight):
+
+    if graphs["friends"].get_edge(a, b) == 1.0:
+        print(f"{a} and {b} already despise each other.")
+        return
+
+    graphs["friends"].weaken_edge(a, b, weight)
+
+    if graphs["friends"].get_edge(a, b) == 1.0:
+        print(f"{a} and {b} are now arch-enemies.")
+    elif graphs["friends"].get_edge(a, b) == 1.5:
+        print(f"{a} and {b} have a neutral relationship.")
+    elif graphs["friends"].get_edge(a, b) < 1.5:
+        print(f"{a} and {b} now dislike each other more.")
+    else:
+        print(f"{a} and {b} still like each other.")
+
+
+# TODO: Write trust/distrust methods. Should be affected by 
 
 
 def print_people(graphs):
