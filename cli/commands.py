@@ -1,11 +1,17 @@
 from core.matrixGraph import *
+from math import log
+from numpy import random
+from numpy import clip
+import logging
+
+logger = logging.getLogger(__name__)
 
 def add_person(graphs, person):
     # Add the person to each graph
     for graph in graphs.values():
         graph.add_vertex(person)
 
-    print(f"{person} successfully added!")
+    logger.info(f"{person} successfully added!")
 
 
 def remove_person(graphs, person):
@@ -13,83 +19,123 @@ def remove_person(graphs, person):
     for graph in graphs.values():
         graph.remove_vertex(person)
 
-    print(f"{person} successfully removed.")
+    logger.info(f"{person} successfully removed.")
 
 
 def connect(graphs, a, b, weight = None):
     # Check which type of graph is used for friends, then add edge
     if isinstance(graphs["friends"], U_MatrixGraph):
         graphs["friends"].add_edge(a, b)
-        print(f"{a} and {b} are now friends!")
+        logger.info(f"{a} and {b} are now friends!")
+
     else:
         graphs["friends"].add_edge(a, b, weight)
 
-        if weight:
-            if weight > 1.5:
-                print(f"{a} and {b} are now friends!")
-            elif weight < 1.5:
-                print(f"{a} and {b} are now enemies.")
-            else:
-                print(f"{a} and {b} are now acquainted.")
+        if weight > 1.5:
+            logger.info(f"{a} and {b} are now friends!")
+        elif weight < 1.5:
+            logger.info(f"{a} and {b} are now enemies.")
+        else:
+            logger.info(f"{a} and {b} are now acquainted.")
+
+        _set_trust(graphs, a, b, weight)
 
 
 def disconnect(graphs, a, b):
     graphs["friends"].remove_edge(a, b)
 
-    print(f"{a} and {b} are no longer acquainted.")
+    logger.info(f"{a} and {b} are no longer acquainted.")
 
 
 def strengthen_edge(graphs, a, b, weight):
 
     if graphs["friends"].get_edge(a, b) == 2.0:
-        print(f"{a} and {b} are already best friends!")
+        logger.info(f"{a} and {b} are already best friends!")
         return
 
     graphs["friends"].strengthen_edge(a, b, weight)
 
     if graphs["friends"].get_edge(a, b) == 2.0:
-        print(f"{a} and {b} are now best friends!")
+        logger.info(f"{a} and {b} are now best friends!")
     elif graphs["friends"].get_edge(a, b) == 1.5:
-        print(f"{a} and {b} have a neutral relationship.")
+        logger.info(f"{a} and {b} have a neutral relationship.")
     elif graphs["friends"].get_edge(a, b) > 1.5:
-        print(f"{a} and {b} are now better friends!")
+        logger.info(f"{a} and {b} are now better friends!")
     else:
-        print(f"{a} and {b} still dislike each other.")
+        logger.info(f"{a} and {b} still dislike each other.")
 
 
 def weaken_edge(graphs, a, b, weight):
 
     if graphs["friends"].get_edge(a, b) == 1.0:
-        print(f"{a} and {b} already despise each other.")
+        logger.info(f"{a} and {b} already despise each other.")
         return
 
     graphs["friends"].weaken_edge(a, b, weight)
 
     if graphs["friends"].get_edge(a, b) == 1.0:
-        print(f"{a} and {b} are now arch-enemies.")
+        logger.info(f"{a} and {b} are now arch-enemies.")
     elif graphs["friends"].get_edge(a, b) == 1.5:
-        print(f"{a} and {b} have a neutral relationship.")
+        logger.info(f"{a} and {b} have a neutral relationship.")
     elif graphs["friends"].get_edge(a, b) < 1.5:
-        print(f"{a} and {b} now dislike each other more.")
+        logger.info(f"{a} and {b} now dislike each other more.")
     else:
-        print(f"{a} and {b} still like each other.")
+        logger.info(f"{a} and {b} still like each other.")
 
 
-# TODO: Write trust/distrust methods. Should be affected by 
+def strengthen_trust(graphs, a, b, weight = None):
+    pass
+
+
+def weaken_trust(graphs, a, b, weight = None):
+    pass
+
+
+def _set_trust(graphs, a, b, weight):
+    # Initialize variables for randomness (e) and log shape knob (k)
+    e = 0.05
+    k = 4
+
+    # Convert weight to -1 -> +1 scale
+    relative = (weight - 1.5) / 0.5
+
+    # Capture sign and magnitude
+    sign = 1 if relative >= 0 else -1
+    mag  = abs(relative)
+
+    # Apply soft logarithmic curve and reapply sign
+    curved_mag = log(1 + k * mag) / log(1 + k)
+    curved = sign * curved_mag
+
+    # Map from [-1, +1] to [1, 2]
+    trust_raw = 1.5 + 0.5 * curved
+
+    # Apply slight randomness, restrain max/min. and add to graph
+    trust_noisy_a = trust_raw + random.uniform(-e, e)
+    trust = clip(trust_noisy_a, 1.05, 1.95)
+    graphs["trust"].add_edge(a, b, trust)
+
+    # Mirror last step for other direction
+    trust_noisy_b = trust_raw + random.uniform(-e, e)
+    trust = clip(trust_noisy_b, 1.05, 1.95)
+    graphs["trust"].add_edge(b, a, trust)
+
+    logger.info(f"{a} trust for {b} = " + str(graphs["trust"].get_edge(a,b)))
+    logger.info(f"{b} trust for {a} = " + str(graphs["trust"].get_edge(b,a)))
 
 
 def print_people(graphs):
     people = graphs["friends"].vertices
 
-    print("\nAll people present:\n")
+    logger.info("\nAll people present:\n")
     for person in sorted(people):
-        print(f"    {person}")
-    print()
+        logger.info(f"    {person}")
+    logger.info("")
 
 
 def help_user(graphs, commands):
     # Print the commands that are available based on graphs
-    print("\nAvailable commands:\n")
+    logger.info("\nAvailable commands:\n")
     for cmd in sorted(commands):
-        print(f"    {cmd}")
-    print()
+        logger.info(f"    {cmd}")
+    logger.info("")

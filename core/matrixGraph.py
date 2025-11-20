@@ -379,6 +379,9 @@ class WU_MatrixGraph(W_MatrixGraph):
         # Convert objects to indices if necessary
         edge = [self._vertex_index(v1), self._vertex_index(v2)]
 
+        # Create mirrored edge list
+        edge_mirror = [edge[1], edge[0]]
+
         # Checks weighted edge validity
         tuple_edge = (self._vertex_index(edge[0]), self._vertex_index(edge[1]))
         self._check_weight(tuple_edge, weight)

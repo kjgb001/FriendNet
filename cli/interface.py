@@ -1,5 +1,8 @@
 from .parser import Parser
 from .commands import *
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Keys are commands, values are corresponding methods in commands.py
 COMMAND_MAP = {
@@ -67,8 +70,8 @@ class Interface:
                 else:
                     func(self.graphs, *args)
             else:
-                print(f"Unknown command: {command}")
+                logger.info(f"Unknown command: {command}")
         except Exception as e:
-            print(f"[Error] {e}")
+            logger.info(f"[Error] {e}")
 
 

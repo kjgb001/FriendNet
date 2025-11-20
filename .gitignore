@@ -16,3 +16,6 @@ venv/
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Logs
+friendnet.log

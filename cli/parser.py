@@ -10,4 +10,11 @@ class Parser:
         command = tokens[0]
         args = tokens[1:]
 
+        for i in range(len(args)):
+            try:
+                f_arg = float(args[i])
+                args[i] = f_arg
+            except ValueError:
+                pass
+
         return command, args

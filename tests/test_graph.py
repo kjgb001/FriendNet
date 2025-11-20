@@ -150,4 +150,12 @@ def test_weighted_undirected_matrix_graph_undirectedness(wu_matrixGraph):
     assert wu_matrixGraph.matrix[0][2] == 1.5
     assert wu_matrixGraph.matrix[2][0] == 1.5
 
+
+def test_get_edge(matrixGraph, w_matrixGraph, u_matrixGraph, wu_matrixGraph):
+
+    assert matrixGraph.get_edge(0,1) == 1
+    assert u_matrixGraph.get_edge(0,1) == 1
+    assert w_matrixGraph.get_edge(0,1) == 1.0
+    assert wu_matrixGraph.get_edge(0,1) == 1.0
+
 logger.info("\n" + str(matrixGraph))
