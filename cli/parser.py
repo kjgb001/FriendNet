@@ -1,8 +1,14 @@
+import shlex
 
 class Parser:
-    ''' Parses raw cli input. Returns the command and arguments as a tuple. '''
+    ''' Parses raw CLI input. Returns the command and arguments as a tuple. '''
+    
     def parse(self, raw):
-        tokens = raw.strip().split()
+        try:
+            tokens = shlex.split(raw.strip())
+        except ValueError:
+            # mismatched quotes or similar syntax errors
+            return None, []
 
         if not tokens:
             return None, []
@@ -10,10 +16,10 @@ class Parser:
         command = tokens[0]
         args = tokens[1:]
 
+        # Attempt numeric conversion
         for i in range(len(args)):
             try:
-                f_arg = float(args[i])
-                args[i] = f_arg
+                args[i] = float(args[i])
             except ValueError:
                 pass
 

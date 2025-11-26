@@ -28,14 +28,16 @@ class Person(Vertex):
     Inherits from Vertex class, adding an identity parameter.
     """
     def __init__(self, identity: Identity, edges: list = None) -> None:
-        self.identity = identity
-        self.edges = edges
+        super().__init__(identity, edges)
 
     def __eq__(self, other):
         return (
             isinstance(other, Person) and 
-            self.identity.uid == other.identity.uid
+            self.data.uid == other.data.uid
         )
 
     def __hash__(self):
-        return hash(self.identity.uid)
+        return hash(self.data.uid)
+
+    def __str__(self):
+        return f"{self.data.fname} {self.data.lname}"

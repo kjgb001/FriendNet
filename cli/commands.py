@@ -1,4 +1,6 @@
 from core.matrixGraph import *
+from utils.randomPeople import *
+from utils.peopleIO import *
 from math import log
 from numpy import random
 from numpy import clip
@@ -6,10 +8,52 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def add_person(graphs, person):
-    # Add the person to each graph
-    for graph in graphs.values():
-        graph.add_vertex(person)
+all_people = load_people("assets/people/generated_set.json")
+name_index = {
+    (p.data.fname.lower(), p.data.lname.lower()): p
+    for p in all_people
+}
+
+
+def add_person(graphs, name_str):
+    tokens = name_str.strip().split()
+
+    if len(tokens) == 0:
+        raise ValueError("No name provided.")
+
+    fname = tokens[0]
+    lname = None
+
+    # Capture ENTIRE remainder as last name
+    if len(tokens) > 1:
+        lname = " ".join(tokens[1:])
+
+    # CASE 1: first-name-only lookup
+    if lname is None:
+        matches = _find_keys_by_fname(name_index, fname)
+
+        if len(matches) == 0:
+            raise ValueError("Person not found.")
+
+        if len(matches) > 1:
+            logger.info("Multiple matches found:")
+            for p in matches:
+                logger.info(f"   {p}")
+            logger.info("Use full name to disambiguate.")
+            return
+
+        person = matches[0]
+
+    # CASE 2: full name lookup
+    else:
+        key = (fname.lower(), lname.lower())
+        if key not in name_index:
+            raise ValueError(f"Person '{fname} {lname}' not found.")
+        person = name_index[key]
+
+    # Add to graphs
+    for g in graphs.values():
+        g.add_vertex(person)
 
     logger.info(f"{person} successfully added!")
 
@@ -20,6 +64,24 @@ def remove_person(graphs, person):
         graph.remove_vertex(person)
 
     logger.info(f"{person} successfully removed.")
+
+
+def _find_keys_by_fname(name_index, fname):
+    fname = fname.lower()
+    return [
+        person
+        for (first, last), person in name_index.items()
+        if first == fname
+    ]
+
+
+def generate_people(graphs, number):
+    number = int(number)
+    new_people = build_set(number)
+    save_people("assets/people/generated_set.json", new_people)
+    all_people.append(new_people)
+
+    logger.info(f"{number} people successfully generated!")
 
 
 def connect(graphs, a, b, weight = None):
@@ -84,11 +146,17 @@ def weaken_edge(graphs, a, b, weight):
 
 
 def strengthen_trust(graphs, a, b, weight = None):
-    pass
+    if not weight:
+        weight = 1.0
 
+    graphs["trust"].strengthen_edge(a, b, weight)
+        
 
 def weaken_trust(graphs, a, b, weight = None):
-    pass
+    if not weight:
+        weight = 1.0
+
+    graphs["trust"].weaken_edge(a, b, weight)
 
 
 def _set_trust(graphs, a, b, weight):

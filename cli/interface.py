@@ -9,15 +9,19 @@ COMMAND_MAP = {
     "person": add_person,
     "people": print_people,
     "kill": remove_person,
+    "help": help_user,
+    "generate": generate_people,
+
     "connect": connect,
     "disconnect": disconnect,
+
     "strengthen": strengthen_edge,
     "weaken": weaken_edge,
-    "trust": strengthen_trust,
-    "distrust": weaken_trust,
 
-    #"spread": spread_rumor
-    "help": help_user
+    "trust": strengthen_trust,
+    "distrust": weaken_trust
+
+    #"spread": spread_rumor,
     
     # add more commands
 }
@@ -37,7 +41,7 @@ class Interface:
         self.running = True
         #print("DEBUG", self.graphs)
 
-        self.commands = {"help", "people", "person", "kill"}
+        self.commands = {"help", "people", "person", "kill", "generate"}
         # Add commands based on graphs present
         if "friends" in self.graphs:
             self.commands.update(UNDIRECTED_COMMANDS)
