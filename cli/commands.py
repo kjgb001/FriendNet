@@ -14,42 +14,54 @@ name_index = {
     for p in all_people
 }
 
+def resolve_person(name_str):
+    # If already a Person object, just return it
+    if isinstance(name_str, Person):
+        return name_str
 
-def add_person(graphs, name_str):
     tokens = name_str.strip().split()
 
     if len(tokens) == 0:
         raise ValueError("No name provided.")
 
-    fname = tokens[0]
+    # First token = first name
+    fname = tokens[0].lower()
+
+    # Everything else = last name
     lname = None
-
-    # Capture ENTIRE remainder as last name
     if len(tokens) > 1:
-        lname = " ".join(tokens[1:])
+        lname = " ".join(tokens[1:]).lower()
 
-    # CASE 1: first-name-only lookup
+    # --- Case 1: Only first name given ---
     if lname is None:
-        matches = _find_keys_by_fname(name_index, fname)
+        matches = [
+            person
+            for (f, l), person in name_index.items()
+            if f == fname
+        ]
 
         if len(matches) == 0:
-            raise ValueError("Person not found.")
+            raise ValueError(f"No person found with first name '{fname}'.")
 
         if len(matches) > 1:
-            logger.info("Multiple matches found:")
+            msg = "Multiple people found:\n"
             for p in matches:
-                logger.info(f"   {p}")
-            logger.info("Use full name to disambiguate.")
-            return
+                msg += f"   {p}\n"
+            msg += "Provide full name to disambiguate."
+            raise ValueError(msg)
 
-        person = matches[0]
+        return matches[0]
 
-    # CASE 2: full name lookup
-    else:
-        key = (fname.lower(), lname.lower())
-        if key not in name_index:
-            raise ValueError(f"Person '{fname} {lname}' not found.")
-        person = name_index[key]
+    # --- Case 2: Full name given ---
+    key = (fname, lname)
+    if key not in name_index:
+        raise ValueError(f"No person found with name '{fname} {lname}'.")
+
+    return name_index[key]
+
+
+def add_person(graphs, name_str):
+    person = resolve_person(name_str)
 
     # Add to graphs
     for g in graphs.values():
@@ -58,7 +70,8 @@ def add_person(graphs, name_str):
     logger.info(f"{person} successfully added!")
 
 
-def remove_person(graphs, person):
+def remove_person(graphs, name_str):
+    person = resolve_person(name_str)
     # Remove the person from each graph
     for graph in graphs.values():
         graph.remove_vertex(person)
@@ -85,6 +98,9 @@ def generate_people(graphs, number):
 
 
 def connect(graphs, a, b, weight = None):
+    a = resolve_person(a)
+    b = resolve_person(b)
+
     # Check which type of graph is used for friends, then add edge
     if isinstance(graphs["friends"], U_MatrixGraph):
         graphs["friends"].add_edge(a, b)
@@ -104,12 +120,17 @@ def connect(graphs, a, b, weight = None):
 
 
 def disconnect(graphs, a, b):
+    a = resolve_person(a)
+    b = resolve_person(b)
+
     graphs["friends"].remove_edge(a, b)
 
     logger.info(f"{a} and {b} are no longer acquainted.")
 
 
 def strengthen_edge(graphs, a, b, weight):
+    a = resolve_person(a)
+    b = resolve_person(b)
 
     if graphs["friends"].get_edge(a, b) == 2.0:
         logger.info(f"{a} and {b} are already best friends!")
@@ -128,6 +149,8 @@ def strengthen_edge(graphs, a, b, weight):
 
 
 def weaken_edge(graphs, a, b, weight):
+    a = resolve_person(a)
+    b = resolve_person(b)
 
     if graphs["friends"].get_edge(a, b) == 1.0:
         logger.info(f"{a} and {b} already despise each other.")
@@ -146,6 +169,9 @@ def weaken_edge(graphs, a, b, weight):
 
 
 def strengthen_trust(graphs, a, b, weight = None):
+    a = resolve_person(a)
+    b = resolve_person(b)
+
     if not weight:
         weight = 1.0
 
@@ -153,6 +179,9 @@ def strengthen_trust(graphs, a, b, weight = None):
         
 
 def weaken_trust(graphs, a, b, weight = None):
+    a = resolve_person(a)
+    b = resolve_person(b)
+
     if not weight:
         weight = 1.0
 
@@ -160,6 +189,9 @@ def weaken_trust(graphs, a, b, weight = None):
 
 
 def _set_trust(graphs, a, b, weight):
+    a = resolve_person(a)
+    b = resolve_person(b)
+
     # Initialize variables for randomness (e) and log shape knob (k)
     e = 0.05
     k = 4
