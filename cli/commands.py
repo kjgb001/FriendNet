@@ -14,7 +14,7 @@ name_index = {
     for p in all_people
 }
 
-def resolve_person(name_str):
+def _resolve_person(name_str):
     # If already a Person object, just return it
     if isinstance(name_str, Person):
         return name_str
@@ -61,7 +61,7 @@ def resolve_person(name_str):
 
 
 def add_person(graphs, name_str):
-    person = resolve_person(name_str)
+    person = _resolve_person(name_str)
 
     # Add to graphs
     for g in graphs.values():
@@ -71,7 +71,7 @@ def add_person(graphs, name_str):
 
 
 def remove_person(graphs, name_str):
-    person = resolve_person(name_str)
+    person = _resolve_person(name_str)
     # Remove the person from each graph
     for graph in graphs.values():
         graph.remove_vertex(person)
@@ -98,8 +98,8 @@ def generate_people(graphs, number):
 
 
 def connect(graphs, a, b, weight = None):
-    a = resolve_person(a)
-    b = resolve_person(b)
+    a = _resolve_person(a)
+    b = _resolve_person(b)
 
     # Check which type of graph is used for friends, then add edge
     if isinstance(graphs["friends"], U_MatrixGraph):
@@ -120,8 +120,8 @@ def connect(graphs, a, b, weight = None):
 
 
 def disconnect(graphs, a, b):
-    a = resolve_person(a)
-    b = resolve_person(b)
+    a = _resolve_person(a)
+    b = _resolve_person(b)
 
     graphs["friends"].remove_edge(a, b)
 
@@ -129,68 +129,114 @@ def disconnect(graphs, a, b):
 
 
 def strengthen_edge(graphs, a, b, weight):
-    a = resolve_person(a)
-    b = resolve_person(b)
+    a = _resolve_person(a)
+    b = _resolve_person(b)
 
-    if graphs["friends"].get_edge(a, b) == 2.0:
+    friendship = graphs["friends"].get_edge(a, b)
+
+    if friendship == 2.0:
         logger.info(f"{a} and {b} are already best friends!")
         return
 
     graphs["friends"].strengthen_edge(a, b, weight)
 
-    if graphs["friends"].get_edge(a, b) == 2.0:
+    if friendship == 2.0:
         logger.info(f"{a} and {b} are now best friends!")
-    elif graphs["friends"].get_edge(a, b) == 1.5:
+    elif friendship == 1.5:
         logger.info(f"{a} and {b} have a neutral relationship.")
-    elif graphs["friends"].get_edge(a, b) > 1.5:
+    elif friendship > 1.5:
         logger.info(f"{a} and {b} are now better friends!")
     else:
         logger.info(f"{a} and {b} still dislike each other.")
 
 
 def weaken_edge(graphs, a, b, weight):
-    a = resolve_person(a)
-    b = resolve_person(b)
+    a = _resolve_person(a)
+    b = _resolve_person(b)
 
-    if graphs["friends"].get_edge(a, b) == 1.0:
+    friendship = graphs["friends"].get_edge(a, b)
+
+    if friendship == 1.0:
         logger.info(f"{a} and {b} already despise each other.")
         return
 
     graphs["friends"].weaken_edge(a, b, weight)
 
-    if graphs["friends"].get_edge(a, b) == 1.0:
+    if friendship == 1.0:
         logger.info(f"{a} and {b} are now arch-enemies.")
-    elif graphs["friends"].get_edge(a, b) == 1.5:
+    elif friendship == 1.5:
         logger.info(f"{a} and {b} have a neutral relationship.")
-    elif graphs["friends"].get_edge(a, b) < 1.5:
+    elif friendship < 1.5:
         logger.info(f"{a} and {b} now dislike each other more.")
     else:
         logger.info(f"{a} and {b} still like each other.")
 
 
 def strengthen_trust(graphs, a, b, weight = None):
-    a = resolve_person(a)
-    b = resolve_person(b)
+    a = _resolve_person(a)
+    b = _resolve_person(b)
 
     if not weight:
         weight = 1.0
 
+    trust = graphs["trust"].get_edge(a, b)
+
+    if trust == 0:
+        raise ValueError(f"{a} and {b} don't know each other.")
+
+
+    if trust == 2.0:
+        logger.info(f"{a} already trusts {b} completely!")
+        return
+
     graphs["trust"].strengthen_edge(a, b, weight)
+
+    if trust == 2.0:
+        logger.info(f"{a} now trusts {b} completely!")
+    elif trust > 1.4 and trust < 1.6:
+        logger.info(f"{a} has neutral trust toward {b}.")
+    elif trust <= 1.4:
+        logger.info(f"{a} still doesn't trust {b} much.")
+    else:
+        logger.info(f"{a} trusts {b}.")
         
 
 def weaken_trust(graphs, a, b, weight = None):
-    a = resolve_person(a)
-    b = resolve_person(b)
+    a = _resolve_person(a)
+    b = _resolve_person(b)
 
     if not weight:
         weight = 1.0
 
+    trust = graphs["trust"].get_edge(a, b)
+
+    if trust == 0:
+        raise ValueError(f"{a} and {b} don't know each other.")
+
+    if trust == 0:
+        weight = 1.5 - weight
+        weight = clip(weight, 1.0, 2.0)
+        _set_trust(a, b)
+
+    if trust == 1.0:
+        logger.info(f"{a} already doesn't trust {b} at all.")
+        return
+
     graphs["trust"].weaken_edge(a, b, weight)
+
+    if trust == 1.0:
+        logger.info(f"{a} now doesn't trust {b} at all.")
+    elif trust > 1.4 and trust < 1.6:
+        logger.info(f"{a} has neutral trust toward {b}.")
+    elif trust <= 1.4:
+        logger.info(f"{a} doesn't trust {b} much.")
+    else:
+        logger.info(f"{a} still trusts {b}.")
 
 
 def _set_trust(graphs, a, b, weight):
-    a = resolve_person(a)
-    b = resolve_person(b)
+    a = _resolve_person(a)
+    b = _resolve_person(b)
 
     # Initialize variables for randomness (e) and log shape knob (k)
     e = 0.05
@@ -228,7 +274,7 @@ def print_people(graphs):
     people = graphs["friends"].vertices
 
     logger.info("\nAll people present:\n")
-    for person in sorted(people):
+    for person in people:
         logger.info(f"    {person}")
     logger.info("")
 
