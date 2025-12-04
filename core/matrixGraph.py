@@ -197,6 +197,30 @@ class MatrixGraph(GraphInterface):
         return self.matrix[edge[0]][edge[1]]
 
 
+    def get_connections(self, vertex):
+        '''Returns all connections for given vertex as a tuple of two lists 
+        containing the indices of connected vertices, 
+        the first list are outgoing connections and vice versa'''
+
+        vertex = _vertex_index(vertex)
+        incoming_edges = []
+        outgoing_edges = []
+
+        for i in len(self.matrix):
+            outgoing_edge = self.get_edge(vertex, i)
+            incoming_edge = self.get_edge(i, vertex)
+            
+            if outgoing_edge:
+                if outgoing_edge != 0:
+                    outgoing_edges.append(i)
+            if incoming_edge:
+                if incoming_edge != 0:
+                    incoming_edges.append(i)
+
+        return (outgoing_edges, incoming_edges)
+
+
+
 class U_MatrixGraph(MatrixGraph):
     
     def _populate_matrix(self):
@@ -252,6 +276,22 @@ class U_MatrixGraph(MatrixGraph):
         # Set value at edge cooridinate to zero to represent no connection.
         self.matrix[edge[0]][edge[1]] = 0
         self.matrix[edge[1]][edge[0]] = 0
+
+
+    def get_connections(self, vertex):
+        ''' Returns all connections for given vertex as a list of indices of connected vertices'''
+
+        vertex = _vertex_index(vertex)
+        edges = []
+
+        for i in len(self.matrix):
+            edge = self.get_edge(vertex, i)
+            
+            if edge:
+                if edge != 0:
+                    edges.append(i)
+
+        return edges
 
 
 class W_MatrixGraph(MatrixGraph):
