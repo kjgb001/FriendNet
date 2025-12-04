@@ -12,7 +12,7 @@ class MatrixGraph(GraphInterface):
     '''
     # Could rewrite class to allow either index based OR vertex object based edges
     def __init__(self, vertices: list | None, edges: list[list[int]] | None, weights: dict = None) -> None:
-        if vertices == None:
+        if vertices is None:
             vertices = []
         
         if edges is None:

@@ -7,10 +7,11 @@ import random
 class Rumor():
 
     def __init__(self, graph, spreader, target, rumor, trust = None):
+        ''' Rumor class to store rumor information, query stored information, propogate rumors, and trace their propogation. '''
         self.uid = uuid.uuid4()
-        self.friend_graph = check_friend_graph(graph)
+        self.friend_graph = self.check_friend_graph(graph)
 
-        rumor_graph = MatrixGraph((v for v in self.friend_graph.vertices), None)
+        rumor_graph = MatrixGraph(list(self.friend_graph.vertices), None)
         self.graph = rumor_graph
 
         self.spreader = spreader
@@ -20,17 +21,21 @@ class Rumor():
         self.visited = set() # Used to ensure spread_rumor does not infinitely recurse
 
         if trust:
-            self.trust_graph = check_trust_graph(trust)
+            self.trust_graph = self.check_trust_graph(trust)
+        else:
+            self.trust_graph = trust
 
-        spread_rumor(spreader, target, rumor)
+        self.spread_rumor(spreader, target, rumor)
 
 
     def check_friend_graph(self, graph):
-        if isinstance(graph, GraphInterface):
+        if not isinstance(graph, GraphInterface):
             raise TypeError(f"Rumor: Friend graph must be a graph, got {type(graph)}.")
 
         if len(graph) < 1:
             raise ValueError(f"Rumor: Friend graph is empty.")
+
+        return graph
 
 
     def check_trust_graph(self, graph):
@@ -40,42 +45,90 @@ class Rumor():
         if len(graph) < 1:
             raise ValueError(f"Rumor: Trust graph is empty.")
 
+        return graph
 
-    def update_rumor_graph_vertices(graph):
-        self.friend_graph = check_graph(graph)
+
+    def update_graphs(self, graph):
+        ''' Takes in a graph to replace the current friend graph, and adds vertices from this graph to the rumor graph if not present. ''' 
+        self.friend_graph = self.check_friend_graph(graph)
         
         for i in range(len(graph)):
             if graph.vertices[i] not in self.graph.vertices:
                 self.graph.add_vertex(graph.vertices[i])
 
 
-    def spread_rumor(self, spreader, rumor):
+    def spread_rumor(self, spreader, target, rumor):
+        ''' Recursive function that takes in the rumor info and spreads to connected vertices based on weights and RNG. '''
         spreader_friends = self.friend_graph.get_connections(spreader)
         spread_bool = False
+        selection_chance = 0
         trust_level = 0
 
         self.visited.add(spreader)
-
-        ''' TODO: have spreader attempt to spread the rumor to their friends randomly if unweighted graph,
-                else start from closest friends with randomness baked in. Then, if trust graph present,
-                use trust score in helper function that determines if the friend continues propogation. '''
         
         for friend in spreader_friends:
-            # TODO: Make rumors spread more strongly through close friends by checking edge strength and altering spread RNG
-
-            # Determine if rumor will propogate further
-            if self.trust_graph:
-                trust_level = self.trust_graph.get_edge(friend, spreader) - 1 # subtract one to normalize value
-                spread_bool = random.random() < trust_level
+            # Make rumors spread semi-randomly and more strongly through close friends by checking edge strength and introducing a new RNG bool variable
+            if type(self.friend_graph) == WU_MatrixGraph:
+                selection_chance = (self.friend_graph.get_edge(spreader, friend) - 1) * 1.5 # subtract one to normalize value then increase by 50% to soften probabilistic curve
+                selected = random.random() < selection_chance
             else:
-                spread_bool = random.randint(0, 1) == 1
+                # In case of unweighted friend graph use blind RNG (adjust number to change chance, higher = more likely)
+                selected = random.random() < 0.75
 
-            # If the friend hasn't already heard the rumor and 
-            if friend not in visited and spread_bool:
+            # Determine if rumor will propogate to this friend
+            if selected:
+                if self.trust_graph:
+                    trust_level = self.trust_graph.get_edge(friend, spreader) - 1 # subtract one to normalize value
+                    spread_bool = random.random() < trust_level
+                else:
+                    spread_bool = random.randint(0, 1) == 1
+
+            # If the friend hasn't already heard the rumor and it is set to spread, add edge to trust graph and recurse
+            if friend not in self.visited and spread_bool:
                 self.graph.add_edge(spreader, friend)
-                spread_rumor(friend, rumor)
-                    
+                self.spread_rumor(friend, target, rumor)
 
 
-    def get_id():
+    def get_id(self):
         return self.uid
+    
+    def get_rumor_graph(self):
+        return self.graph
+
+    def get_spreader(self):
+        return self.spreader
+
+    def get_target(self):
+        return self.target
+
+    def get_rumor(self):
+        return self.rumor
+
+
+    def __str__(self):
+        '''Return a human-readable summary of the rumor and its propagation.'''
+        lines = [
+            f"Rumor ID: {self.uid}",
+            f"Spreader: {self.spreader}",
+            f"Target: {self.target}",
+            f"Rumor Content: \"{self.rumor}\"",
+            "",
+        ]
+
+        # List visited names, if any
+        if self.visited:
+            filtered = [str(v) for v in self.visited if v != self.spreader]
+            visited_list = ", ".join(filtered) if len(filtered) > 0 else "None"
+            lines.append(f"People Who Have Heard It: {visited_list}")
+        else:
+            lines.append("People Who Have Heard It: None")
+
+        # Count edges in the rumor graph
+        edge_count = sum(
+            1 for i in range(len(self.graph.vertices))
+            for j in range(len(self.graph.vertices))
+            if self.graph.get_edge(i, j) not in (None, 0)
+        )
+        lines.append(f"Times Rumor was Spread: {edge_count}")
+
+        return "\n".join(lines)
