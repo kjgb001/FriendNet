@@ -19,9 +19,9 @@ COMMAND_MAP = {
     "weaken": weaken_edge,
 
     "trust": strengthen_trust,
-    "distrust": weaken_trust
+    "distrust": weaken_trust,
 
-    #"spread": spread_rumor,
+    "spread": spread_rumor,
     
     # add more commands
 }
@@ -39,6 +39,7 @@ class Interface:
         self.graphs = graphs
         self.parser = parser
         self.running = True
+        self.rumors = []
         #print("DEBUG", self.graphs)
 
         self.commands = {"help", "people", "person", "kill", "generate"}
@@ -71,6 +72,8 @@ class Interface:
                     func(self.graphs, self.commands)
                 elif command == "people":
                     func(self.graphs)
+                elif command == "spread":
+                    self.rumors.append(func(self.graphs, *args))
                 else:
                     func(self.graphs, *args)
             else:

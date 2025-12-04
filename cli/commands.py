@@ -1,4 +1,5 @@
 from core.matrixGraph import *
+from core.rumor import *
 from utils.randomPeople import *
 from utils.peopleIO import *
 from math import log
@@ -268,6 +269,17 @@ def _set_trust(graphs, a, b, weight):
 
     logger.info(f"{a} trust for {b} = " + str(graphs["trust"].get_edge(a,b)))
     logger.info(f"{b} trust for {a} = " + str(graphs["trust"].get_edge(b,a)))
+
+
+def spread_rumor(graphs, spreader, target, rumor: str):
+    rumor = Rumor(graphs["friends"], spreader, target, rumor)
+    rumor.spread_rumor()
+
+    logger.info(f"{spreader} spread a rumor about {target} to {len(rumor)} people!\n")
+    logger.info("   " + rumor + "\n")
+    logger.info("")
+
+    return rumor
 
 
 def print_people(graphs):
