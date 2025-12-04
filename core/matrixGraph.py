@@ -197,27 +197,36 @@ class MatrixGraph(GraphInterface):
         return self.matrix[edge[0]][edge[1]]
 
 
-    def get_connections(self, vertex):
-        '''Returns all connections for given vertex as a tuple of two lists 
-        containing the indices of connected vertices, 
-        the first list are outgoing connections and vice versa'''
+    def get_out_connections(self, vertex):
+        ''' Returns all outgoing connections for given vertex as a list of indices of connected vertices'''
 
         vertex = _vertex_index(vertex)
-        incoming_edges = []
-        outgoing_edges = []
+        edges = []
 
         for i in len(self.matrix):
-            outgoing_edge = self.get_edge(vertex, i)
-            incoming_edge = self.get_edge(i, vertex)
+            edge = self.get_edge(vertex, i)
             
-            if outgoing_edge:
-                if outgoing_edge != 0:
-                    outgoing_edges.append(i)
-            if incoming_edge:
-                if incoming_edge != 0:
-                    incoming_edges.append(i)
+            if edge:
+                if edge != 0:
+                    edges.append(i)
 
-        return (outgoing_edges, incoming_edges)
+        return edges
+
+
+    def get_in_connections(self, vertex):
+        ''' Returns all incoming connections for given vertex as a list of indices of connected vertices'''
+
+        vertex = _vertex_index(vertex)
+        edges = []
+
+        for i in len(self.matrix):
+            edge = self.get_edge(i, vertex)
+            
+            if edge:
+                if edge != 0:
+                    edges.append(i)
+
+        return edges
 
 
 
