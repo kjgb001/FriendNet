@@ -1,4 +1,5 @@
 from core.matrixGraph import *
+from core.simEngine import Simulation
 from .interface import Interface
 from .parser import Parser
 import argparse
@@ -16,7 +17,9 @@ def main():
     # Use args to set graph types
     graphs = build_graphs(args.rep, load_list)
 
-    # Call build_network here once profile generation and preloaded network setups are ready
+    # Call start here once profile generation and preloaded network setups are ready
+    pop_bool = True if args.populate else False
+    #sim_init(pop_bool)
 
     parser = Parser()
     interface = Interface(graphs, parser)
@@ -26,17 +29,24 @@ def main():
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Run FriendNet simulation")
 
+    # List based graphs not implemented yet, this does nothing
     parser.add_argument(
         "--rep",
         choices=["matrix", "list"],
         default="matrix",
-        help="Choose graph representation."
+        help="Choose graph representation: matrix or list"
     )
 
     parser.add_argument(
         "--load",
         default="all",
         help="Comma-separated list of graphs to load: undirected,directed,weighted,dag"
+    )
+
+    parser.add_argument(
+        "--populate",
+        help="Determines if the graph will be auto-populated by the simulation"
+
     )
 
     return parser.parse_args()
@@ -66,14 +76,6 @@ def build_graphs(rep, load_list):
 
     return graphs
 
-
-def build_network():
-    ''' TODO: Should create/use fully featured persons and semi/psuedo-randomly 
-     generate a network based on available graphs and users. Automatically uses
-     pre-generated static user-list unless --gen arg passed at run.
-     If weighted graphs present, trust levels (Weighted Directed Graph) 
-     should be set based on friendship levels as a baseline according to a logarithmic function.
-     Should use the interface to execute commands as needed while blocking prints.
-     '''
-
+# initialize Simulation object
+def sim_init(pop_bool):
     pass
