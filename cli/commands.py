@@ -10,12 +10,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 all_people = load_people("assets/people/generated_set.json")
-name_index = {
+all_name_index = {
     (p.data.fname.lower(), p.data.lname.lower()): p
     for p in all_people
 }
+present_name_index = {}
 
-def _resolve_person(name_str):
+def _resolve_person(name_str, name_index):
     # If already a Person object, just return it
     if isinstance(name_str, Person):
         return name_str
@@ -61,32 +62,52 @@ def _resolve_person(name_str):
     return name_index[key]
 
 
+def _find_keys_by_fname(name_index, fname):
+    fname = fname.lower()
+    return [
+        person
+        for (first, last), person in all_name_index.items()
+        if first == fname
+    ]
+
+
+def _update_present_names(person, action):
+    if action == "add":
+        present_name_index[
+            (person.data.fname.lower(), person.data.lname.lower())
+                            ] = person
+
+    elif action == "remove":
+        del present_name_index[
+            (person.data.fname.lower(), person.data.lname.lower())]
+
+    else:
+        raise ValueError("(_update_present_names) Invalid action.")
+
+    
+
 def add_person(graphs, name_str):
-    person = _resolve_person(name_str)
+    person = _resolve_person(name_str, all_name_index)
 
     # Add to graphs
     for g in graphs.values():
         g.add_vertex(person)
 
+    _update_present_names(person, "add")
+
     logger.info(f"{person} successfully added!")
 
 
 def remove_person(graphs, name_str):
-    person = _resolve_person(name_str)
+    person = _resolve_person(name_str, present_name_index)
     # Remove the person from each graph
     for graph in graphs.values():
         graph.remove_vertex(person)
 
+    # Remove from working name index
+    _update_present_names(person, "remove")
+
     logger.info(f"{person} successfully removed.")
-
-
-def _find_keys_by_fname(name_index, fname):
-    fname = fname.lower()
-    return [
-        person
-        for (first, last), person in name_index.items()
-        if first == fname
-    ]
 
 
 def generate_people(graphs, number):
@@ -99,8 +120,8 @@ def generate_people(graphs, number):
 
 
 def connect(graphs, a, b, weight = None):
-    a = _resolve_person(a)
-    b = _resolve_person(b)
+    a = _resolve_person(a, present_name_index)
+    b = _resolve_person(b, present_name_index)
 
     # Check which type of graph is used for friends, then add edge
     if isinstance(graphs["friends"], U_MatrixGraph):
@@ -121,8 +142,8 @@ def connect(graphs, a, b, weight = None):
 
 
 def disconnect(graphs, a, b):
-    a = _resolve_person(a)
-    b = _resolve_person(b)
+    a = _resolve_person(a, present_name_index)
+    b = _resolve_person(b, present_name_index)
 
     graphs["friends"].remove_edge(a, b)
 
@@ -130,8 +151,8 @@ def disconnect(graphs, a, b):
 
 
 def strengthen_edge(graphs, a, b, weight):
-    a = _resolve_person(a)
-    b = _resolve_person(b)
+    a = _resolve_person(a, present_name_index)
+    b = _resolve_person(b, present_name_index)
 
     friendship = graphs["friends"].get_edge(a, b)
 
@@ -152,8 +173,8 @@ def strengthen_edge(graphs, a, b, weight):
 
 
 def weaken_edge(graphs, a, b, weight):
-    a = _resolve_person(a)
-    b = _resolve_person(b)
+    a = _resolve_person(a, present_name_index)
+    b = _resolve_person(b, present_name_index)
 
     friendship = graphs["friends"].get_edge(a, b)
 
@@ -174,8 +195,8 @@ def weaken_edge(graphs, a, b, weight):
 
 
 def strengthen_trust(graphs, a, b, weight = None):
-    a = _resolve_person(a)
-    b = _resolve_person(b)
+    a = _resolve_person(a, present_name_index)
+    b = _resolve_person(b, present_name_index)
 
     if not weight:
         weight = 1.0
@@ -203,8 +224,8 @@ def strengthen_trust(graphs, a, b, weight = None):
         
 
 def weaken_trust(graphs, a, b, weight = None):
-    a = _resolve_person(a)
-    b = _resolve_person(b)
+    a = _resolve_person(a, present_name_index)
+    b = _resolve_person(b, present_name_index)
 
     if not weight:
         weight = 1.0
@@ -236,8 +257,8 @@ def weaken_trust(graphs, a, b, weight = None):
 
 
 def _set_trust(graphs, a, b, weight):
-    a = _resolve_person(a)
-    b = _resolve_person(b)
+    a = _resolve_person(a, present_name_index)
+    b = _resolve_person(b, present_name_index)
 
     # Initialize variables for randomness (e) and log shape knob (k)
     e = 0.05

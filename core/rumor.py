@@ -1,6 +1,6 @@
-from matrixgraph import MatrixGraph
-from graphInterface import GraphInterface
-from node import *
+from core.matrixGraph import MatrixGraph
+from core.graphInterface import GraphInterface
+from core.node import *
 import uuid
 import random
 
