@@ -17,7 +17,7 @@ class GraphInterface(ABC):
     def remove_edge(self, v1, v2):
         pass
 
-    def size(self):
+    def __len__(self):
         return len(self.vertices)
 
     def __str__(self):

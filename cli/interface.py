@@ -27,7 +27,7 @@ COMMAND_MAP = {
 }
 
 UNDIRECTED_COMMANDS = ["connect", "disconnect"]
-DIRECTED_COMMANDS = []
+DIRECTED_COMMANDS = ["spread"]
 WEIGHTED_COMMANDS = ["strengthen", "weaken", "trust", "distrust"]
 DAG_COMMANDS = []
 

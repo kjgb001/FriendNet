@@ -17,12 +17,13 @@ def main():
     # Use args to set graph types
     graphs = build_graphs(args.rep, load_list)
 
-    # Call start here once profile generation and preloaded network setups are ready
-    pop_bool = True if args.populate else False
-    #sim_init(pop_bool)
-
     parser = Parser()
     interface = Interface(graphs, parser)
+
+    # Call start here once profile generation and preloaded network setups are ready
+    pop_bool = args.populate
+    sim_init(interface, pop_bool)
+    
     interface.run()
 
 
@@ -37,6 +38,7 @@ def parse_arguments():
         help="Choose graph representation: matrix or list"
     )
 
+    # Could replace with automatic detection that checks to see if the graphs have any properties after init.
     parser.add_argument(
         "--load",
         default="all",
@@ -45,8 +47,8 @@ def parse_arguments():
 
     parser.add_argument(
         "--populate",
-        help="Determines if the graph will be auto-populated by the simulation"
-
+        action="store_true",
+        help="Auto-populate the graph on startup"
     )
 
     return parser.parse_args()
@@ -77,5 +79,5 @@ def build_graphs(rep, load_list):
     return graphs
 
 # initialize Simulation object
-def sim_init(pop_bool):
-    pass
+def sim_init(interface, pop_bool):
+    sim = Simulation(interface, pop_bool)
