@@ -1,6 +1,7 @@
 from .parser import Parser
 from .commands import *
 import logging
+import utils.logger as logger_mod
 
 logger = logging.getLogger(__name__)
 
@@ -80,5 +81,12 @@ class Interface:
                 logger.info(f"Unknown command: {command}")
         except Exception as e:
             logger.info(f"[Error] {e}")
+
+
+    def suppress_output(self):
+        logger_mod.suppress_commands = True
+    
+    def resume_output(self):
+        logger_mod.suppress_commands = False
 
 

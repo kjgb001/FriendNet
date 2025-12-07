@@ -80,6 +80,9 @@ class MatrixGraph(GraphInterface):
         if len(edge) != 2 or not all(isinstance(i, int) for i in edge):
             raise ValueError("Edge must be a list of two integer indices.")
 
+        if edge[0] == edge[1]:
+            raise ValueError("Vertex cannot have edge with itself.")
+
         for i in edge:
             if not 0 <= i < len(self.vertices):
                 raise ValueError(f"Edge index {i} out of range for vertices {len(self.vertices)}.")

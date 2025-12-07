@@ -18,12 +18,12 @@ class Simulation():
 
     
     def build_network(self, file = "generated_set", count = 25):
-        ''' TODO: Should create/use fully featured persons and semi/psuedo-randomly 
-        generate a network based on available graphs and users. Automatically uses
-        pre-generated static user-list unless --gen arg passed at run.
-        Should use the interface to execute commands as needed while blocking prints.
+        ''' 
+        Randomly collects [count] people from specified file in assets/people directory, 
+        then adds them to the active graphs and randomly makes connections between them.
         '''
         try:
+            self.interface.suppress_output()
             # Get people from specified file and create a list of their indices
             all_people = load_people("assets/people/"+file+".json")
             indices = list(range(len(all_people)))
@@ -42,12 +42,23 @@ class Simulation():
             for person in picked:
                 friend_num = random.randint(0, 25) # Could be replaced with an algorithm to assign number of friends on a bell curve
                 friends = []
+
                 for i in range(friend_num):
-                    friend_index = random.randint(0, len(picked)-1)
+                    # Prevent self connection attempts
+                    while True:
+                        friend_index = random.randint(0, len(picked)-1)
+                        if picked[friend_index] != person:
+                            break
+
+                    # Set weight if weighted friend graph in use
                     weight = random.random() + 1 if type(self.interface.graphs['friends']) == WU_MatrixGraph else None # Could be rewritten with a logarithmic probability curve to favor positive relationships over negative ones
 
+                    # Make connection via interface command
                     self.interface.handle("connect", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
                         f"{picked[friend_index].data.fname.lower()} {picked[friend_index].data.lname.lower()}", weight])
+
+            self.interface.resume_output()
+            logger.info("\nNetwork build successful!")
 
                 
         except Exception as e:
