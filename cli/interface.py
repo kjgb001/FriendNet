@@ -1,6 +1,7 @@
 from .parser import Parser
 from .commands import *
 import logging
+import traceback
 import utils.logger as logger_mod
 
 logger = logging.getLogger(__name__)
@@ -12,6 +13,7 @@ COMMAND_MAP = {
     "kill": remove_person,
     "help": help_user,
     "generate": generate_people,
+    "reload": reload_all_people,
 
     "connect": connect,
     "disconnect": disconnect,
@@ -35,15 +37,19 @@ DAG_COMMANDS = []
 
 class Interface:
     ''' CLI Interface '''
-    def __init__(self, graphs: dict, parser: Parser):
+    def __init__(self, parser: Parser):
         # Takes graph dict from cli.py to define which graph structures to use
-        self.graphs = graphs
+        self.graphs = None
         self.parser = parser
         self.running = True
         self.rumors = []
+        self.sim = None
         #print("DEBUG", self.graphs)
 
-        self.commands = {"help", "people", "person", "kill", "generate"}
+        self.commands = {"help", "people", "person", "kill", "generate", "reload"}
+        
+
+    def command_init(self):
         # Add commands based on graphs present
         if "friends" in self.graphs:
             self.commands.update(UNDIRECTED_COMMANDS)
@@ -63,9 +69,10 @@ class Interface:
             self.handle(command, args)
 
 
-    def handle(self, command, args):
+    def handle(self, command, args = None):
         ''' Check for command in the map. If present, retrieve value (method name in command.py)
         and call it, passing the graphs and args.'''
+        # TODO: Refactor to pass interface into commands and have people live in Simulation object
         try:
             if command in self.commands:
                 func = COMMAND_MAP[command]
@@ -75,12 +82,15 @@ class Interface:
                     func(self.graphs)
                 elif command == "spread":
                     self.rumors.append(func(self.graphs, *args))
+                elif command == "reload":
+                    func()
                 else:
                     func(self.graphs, *args)
             else:
                 logger.info(f"Unknown command: {command}")
         except Exception as e:
             logger.info(f"[Error] {e}")
+            #traceback.print_exc() # DEBUG
 
 
     def suppress_output(self):

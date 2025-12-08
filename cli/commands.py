@@ -16,6 +16,15 @@ all_name_index = {
 }
 present_name_index = {}
 
+# TODO: Make commands take in the interface and access/mutate people as sim object attributes
+
+def reload_all_people():
+    all_people = load_people("assets/people/generated_set.json")
+    all_name_index = {
+        (p.data.fname.lower(), p.data.lname.lower()): p
+        for p in all_people
+    }
+
 def _resolve_person(name_str, name_index):
     # If already a Person object, just return it
     if isinstance(name_str, Person):
@@ -114,6 +123,7 @@ def generate_people(graphs, number):
     number = int(number)
     new_people = build_set(number)
     save_people("assets/people/generated_set.json", new_people)
+
     all_people.append(new_people)
 
     logger.info(f"{number} people successfully generated!")

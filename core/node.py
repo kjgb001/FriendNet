@@ -15,10 +15,11 @@ class Identity:
 
     Defines the Identity class, stores identifying information used by Person class
     """
-    def __init__(self, fname, lname, gender) -> None:
+    def __init__(self, fname, lname, gender, picture) -> None:
         self.fname = fname
         self.lname = lname
         self.gender = gender
+        self.picture = picture
         self.uid = uuid.uuid4()
 
 

@@ -1,5 +1,5 @@
 from core.matrixGraph import *
-from core.simEngine import Simulation
+from core.simulation import Simulation
 from .interface import Interface
 from .parser import Parser
 import argparse
@@ -14,16 +14,17 @@ def main():
     else:
         load_list = args.load.split(",")
 
+    parser = Parser()
+    interface = Interface(parser)
+
     # Use args to set graph types
     graphs = build_graphs(args.rep, load_list)
 
-    parser = Parser()
-    interface = Interface(graphs, parser)
-
     # Call start here once profile generation and preloaded network setups are ready
     pop_bool = args.populate
-    sim_init(interface, pop_bool)
+    sim = Simulation(graphs, interface, pop_bool)
     
+    interface.sim = sim
     interface.run()
 
 
@@ -77,7 +78,3 @@ def build_graphs(rep, load_list):
     # Add DAG once implemented
 
     return graphs
-
-# initialize Simulation object
-def sim_init(interface, pop_bool):
-    sim = Simulation(interface, pop_bool)

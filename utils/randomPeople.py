@@ -1,8 +1,8 @@
 import requests
 from core.node import Identity, Person
 
-def create_person(fname, lname, gender):
-    identity = Identity(fname, lname, gender)
+def create_person(fname, lname, gender, picture):
+    identity = Identity(fname, lname, gender, picture)
     return Person(identity)
 
 
@@ -19,7 +19,8 @@ def generate_random_batch(size: int):
         fname = entry["name"]["first"]
         lname = entry["name"]["last"]
         gender = entry["gender"]
-        people.append(create_person(fname, lname, gender))
+        picture = entry["picture"]["thumbnail"]
+        people.append(create_person(fname, lname, gender, picture))
 
     return people
 

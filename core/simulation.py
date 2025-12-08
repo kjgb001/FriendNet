@@ -9,12 +9,18 @@ logger = logging.getLogger(__name__)
 
 class Simulation():
     
-    def __init__(self, interface, populate):
+    def __init__(self, graphs, interface, populate):
+        self.graphs = graphs
         self.interface = interface
         self.parser = Parser()
 
+        self.interface.graphs = graphs
+        self.interface.command_init()
+
+        # Store all people and association indices here
+
         if populate:
-            self.build_network()
+            self.build_network() # TODO: Accept any passed file and count
 
     
     def build_network(self, file = "generated_set", count = 25):
@@ -24,8 +30,17 @@ class Simulation():
         '''
         try:
             self.interface.suppress_output()
-            # Get people from specified file and create a list of their indices
+            # Get people from specified file and 
             all_people = load_people("assets/people/"+file+".json")
+
+            # Checks if there are enough people for random selection (minimum of twice the chosen count), and generates the difference if not.
+            if len(all_people) < count * 2 or not all_people:
+                count_diff = (count * 2) - len(all_people)
+                self.interface.handle("generate", [count_diff])
+                self.interface.handle("reload")
+                all_people = load_people("assets/people/"+file+".json")
+                
+            # Create a list of their indices
             indices = list(range(len(all_people)))
             picked = []
 
