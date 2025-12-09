@@ -38,24 +38,20 @@ DAG_COMMANDS = []
 class Interface:
     ''' CLI Interface '''
     def __init__(self, parser: Parser):
-        # Takes graph dict from cli.py to define which graph structures to use
-        self.graphs = None
         self.parser = parser
         self.running = True
-        self.rumors = []
         self.sim = None
-        #print("DEBUG", self.graphs)
 
         self.commands = {"help", "people", "person", "kill", "generate", "reload"}
         
 
     def command_init(self):
         # Add commands based on graphs present
-        if "friends" in self.graphs:
+        if "friends" in self.sim.graphs:
             self.commands.update(UNDIRECTED_COMMANDS)
-        if "gossip" in self.graphs:
+        if "gossip" in self.sim.graphs:
             self.commands.update(DIRECTED_COMMANDS)
-        if "trust" in self.graphs:
+        if "trust" in self.sim.graphs:
             self.commands.update(WEIGHTED_COMMANDS)
         # TODO: add dag once implemented
 
@@ -77,15 +73,15 @@ class Interface:
             if command in self.commands:
                 func = COMMAND_MAP[command]
                 if command == "help":
-                    func(self.graphs, self.commands)
+                    func(self.sim.graphs, self.commands)
                 elif command == "people":
-                    func(self.graphs)
+                    func(self.sim.graphs)
                 elif command == "spread":
-                    self.rumors.append(func(self.graphs, *args))
+                    self.sim.rumors.append(func(self, self.sim.graphs, *args))
                 elif command == "reload":
-                    func()
+                    func(self)
                 else:
-                    func(self.graphs, *args)
+                    func(self, self.sim.graphs, *args)
             else:
                 logger.info(f"Unknown command: {command}")
         except Exception as e:

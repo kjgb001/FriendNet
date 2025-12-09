@@ -293,7 +293,7 @@ class U_MatrixGraph(MatrixGraph):
     def get_connections(self, vertex):
         ''' Returns all connections for given vertex as a list of indices of connected vertices'''
 
-        vertex = _vertex_index(vertex)
+        vertex = self._vertex_index(vertex)
         edges = []
 
         for i in len(self.matrix):
@@ -506,3 +506,18 @@ class WU_MatrixGraph(W_MatrixGraph):
         tuple_edge = (self._vertex_index(edge[0]), self._vertex_index(edge[1]))
         self._check_weight(tuple_edge, self.matrix[edge[0]][edge[1]])
 
+
+    def get_connections(self, vertex):
+        ''' Returns all connections for given vertex as a list of indices of connected vertices'''
+
+        vertex = self._vertex_index(vertex)
+        edges = []
+
+        for i in len(self.matrix):
+            edge = self.get_edge(vertex, i)
+            
+            if edge:
+                if edge != 0:
+                    edges.append(i)
+
+        return edges

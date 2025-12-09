@@ -25,7 +25,7 @@ class Rumor():
         else:
             self.trust_graph = trust
 
-        self.spread_rumor(spreader, target, rumor)
+        self.spread_rumor(spreader)
 
 
     def check_friend_graph(self, graph):

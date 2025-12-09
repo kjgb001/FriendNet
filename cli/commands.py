@@ -9,23 +9,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-all_people = load_people("assets/people/generated_set.json")
-all_name_index = {
-    (p.data.fname.lower(), p.data.lname.lower()): p
-    for p in all_people
-}
-present_name_index = {}
-
 # TODO: Make commands take in the interface and access/mutate people as sim object attributes
 
-def reload_all_people():
-    all_people = load_people("assets/people/generated_set.json")
-    all_name_index = {
-        (p.data.fname.lower(), p.data.lname.lower()): p
-        for p in all_people
-    }
+def reload_all_people(interface):
+    interface.sim.reload_all_people()
 
-def _resolve_person(name_str, name_index):
+def _update_present_names(interface, person, action):
+    interface.sim.update_present_names(person, action)
+
+
+def _resolve_person(interface, name_str, name_index):
     # If already a Person object, just return it
     if isinstance(name_str, Person):
         return name_str
@@ -71,55 +64,40 @@ def _resolve_person(name_str, name_index):
     return name_index[key]
 
 
-def _find_keys_by_fname(name_index, fname):
+def _find_keys_by_fname(interface, name_index, fname):
     fname = fname.lower()
     return [
         person
-        for (first, last), person in all_name_index.items()
+        for (first, last), person in interface.sim.all_name_index.items()
         if first == fname
     ]
 
 
-def _update_present_names(person, action):
-    if action == "add":
-        present_name_index[
-            (person.data.fname.lower(), person.data.lname.lower())
-                            ] = person
-
-    elif action == "remove":
-        del present_name_index[
-            (person.data.fname.lower(), person.data.lname.lower())]
-
-    else:
-        raise ValueError("(_update_present_names) Invalid action.")
-
-    
-
-def add_person(graphs, name_str):
-    person = _resolve_person(name_str, all_name_index)
+def add_person(interface, graphs, name_str):
+    person = _resolve_person(interface, name_str, interface.sim.all_name_index)
 
     # Add to graphs
     for g in graphs.values():
         g.add_vertex(person)
 
-    _update_present_names(person, "add")
+    _update_present_names(interface, person, "add")
 
     logger.info(f"{person} successfully added!")
 
 
-def remove_person(graphs, name_str):
-    person = _resolve_person(name_str, present_name_index)
+def remove_person(interface, graphs, name_str):
+    person = _resolve_person(interface, name_str, interface.sim.present_name_index)
     # Remove the person from each graph
     for graph in graphs.values():
         graph.remove_vertex(person)
 
     # Remove from working name index
-    _update_present_names(person, "remove")
+    _update_present_names(interface, person, "remove")
 
     logger.info(f"{person} successfully removed.")
 
 
-def generate_people(graphs, number):
+def generate_people(interface, graphs, number):
     number = int(number)
     new_people = build_set(number)
     save_people("assets/people/generated_set.json", new_people)
@@ -129,9 +107,9 @@ def generate_people(graphs, number):
     logger.info(f"{number} people successfully generated!")
 
 
-def connect(graphs, a, b, weight = None):
-    a = _resolve_person(a, present_name_index)
-    b = _resolve_person(b, present_name_index)
+def connect(interface, graphs, a, b, weight = None):
+    a = _resolve_person(interface, a, interface.sim.present_name_index)
+    b = _resolve_person(interface, b, interface.sim.present_name_index)
 
     # Check which type of graph is used for friends, then add edge
     if isinstance(graphs["friends"], U_MatrixGraph):
@@ -139,6 +117,8 @@ def connect(graphs, a, b, weight = None):
         logger.info(f"{a} and {b} are now friends!")
 
     else:
+        if not weight:
+            weight = 1.5
         graphs["friends"].add_edge(a, b, weight)
 
         if weight > 1.5:
@@ -148,21 +128,21 @@ def connect(graphs, a, b, weight = None):
         else:
             logger.info(f"{a} and {b} are now acquainted.")
 
-        _set_trust(graphs, a, b, weight)
+        _set_trust(interface, graphs, a, b, weight)
 
 
-def disconnect(graphs, a, b):
-    a = _resolve_person(a, present_name_index)
-    b = _resolve_person(b, present_name_index)
+def disconnect(interface, graphs, a, b):
+    a = _resolve_person(interface, a, interface.sim.present_name_index)
+    b = _resolve_person(interface, b, interface.sim.present_name_index)
 
     graphs["friends"].remove_edge(a, b)
 
     logger.info(f"{a} and {b} are no longer acquainted.")
 
 
-def strengthen_edge(graphs, a, b, weight):
-    a = _resolve_person(a, present_name_index)
-    b = _resolve_person(b, present_name_index)
+def strengthen_edge(interface, graphs, a, b, weight):
+    a = _resolve_person(interface, a, interface.sim.present_name_index)
+    b = _resolve_person(interface, b, interface.sim.present_name_index)
 
     friendship = graphs["friends"].get_edge(a, b)
 
@@ -182,9 +162,9 @@ def strengthen_edge(graphs, a, b, weight):
         logger.info(f"{a} and {b} still dislike each other.")
 
 
-def weaken_edge(graphs, a, b, weight):
-    a = _resolve_person(a, present_name_index)
-    b = _resolve_person(b, present_name_index)
+def weaken_edge(interface, graphs, a, b, weight):
+    a = _resolve_person(interface, a, interface.sim.present_name_index)
+    b = _resolve_person(interface, b, interface.sim.present_name_index)
 
     friendship = graphs["friends"].get_edge(a, b)
 
@@ -204,9 +184,9 @@ def weaken_edge(graphs, a, b, weight):
         logger.info(f"{a} and {b} still like each other.")
 
 
-def strengthen_trust(graphs, a, b, weight = None):
-    a = _resolve_person(a, present_name_index)
-    b = _resolve_person(b, present_name_index)
+def strengthen_trust(interface, graphs, a, b, weight = None):
+    a = _resolve_person(interface, a, interface.sim.present_name_index)
+    b = _resolve_person(interface, b, interface.sim.present_name_index)
 
     if not weight:
         weight = 1.0
@@ -233,9 +213,9 @@ def strengthen_trust(graphs, a, b, weight = None):
         logger.info(f"{a} trusts {b}.")
         
 
-def weaken_trust(graphs, a, b, weight = None):
-    a = _resolve_person(a, present_name_index)
-    b = _resolve_person(b, present_name_index)
+def weaken_trust(interface, graphs, a, b, weight = None):
+    a = _resolve_person(interface, a, interface.sim.present_name_index)
+    b = _resolve_person(interface, b, interface.sim.present_name_index)
 
     if not weight:
         weight = 1.0
@@ -248,7 +228,7 @@ def weaken_trust(graphs, a, b, weight = None):
     if trust == 0:
         weight = 1.5 - weight
         weight = clip(weight, 1.0, 2.0)
-        _set_trust(a, b)
+        _set_trust(interface, a, b)
 
     if trust == 1.0:
         logger.info(f"{a} already doesn't trust {b} at all.")
@@ -266,9 +246,9 @@ def weaken_trust(graphs, a, b, weight = None):
         logger.info(f"{a} still trusts {b}.")
 
 
-def _set_trust(graphs, a, b, weight):
-    a = _resolve_person(a, present_name_index)
-    b = _resolve_person(b, present_name_index)
+def _set_trust(interface, graphs, a, b, weight):
+    a = _resolve_person(interface, a, interface.sim.present_name_index)
+    b = _resolve_person(interface, b, interface.sim.present_name_index)
 
     # Initialize variables for randomness (e) and log shape knob (k)
     e = 0.05
@@ -302,7 +282,7 @@ def _set_trust(graphs, a, b, weight):
     logger.info(f"{b} trust for {a} = " + str(graphs["trust"].get_edge(b,a)))
 
 
-def spread_rumor(graphs, spreader, target, rumor: str):
+def spread_rumor(interface, graphs, spreader, target, rumor: str):
     rumor = Rumor(graphs["friends"], spreader, target, rumor)
     rumor.spread_rumor()
 

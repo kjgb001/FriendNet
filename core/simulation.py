@@ -13,11 +13,18 @@ class Simulation():
         self.graphs = graphs
         self.interface = interface
         self.parser = Parser()
-
-        self.interface.graphs = graphs
-        self.interface.command_init()
+        self.rumors = []
 
         # Store all people and association indices here
+        self.all_people = load_people("assets/people/generated_set.json")
+        self.all_name_index = {
+            (p.data.fname.lower(), p.data.lname.lower()): p
+            for p in self.all_people
+        }
+        self.present_name_index = {}
+
+        self.interface.sim = self
+        self.interface.command_init()
 
         if populate:
             self.build_network() # TODO: Accept any passed file and count
@@ -66,7 +73,7 @@ class Simulation():
                             break
 
                     # Set weight if weighted friend graph in use
-                    weight = random.random() + 1 if type(self.interface.graphs['friends']) == WU_MatrixGraph else None # Could be rewritten with a logarithmic probability curve to favor positive relationships over negative ones
+                    weight = random.random() + 1 if type(self.graphs['friends']) == WU_MatrixGraph else None # Could be rewritten with a logarithmic probability curve to favor positive relationships over negative ones
 
                     # Make connection via interface command
                     self.interface.handle("connect", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
@@ -79,4 +86,22 @@ class Simulation():
         except Exception as e:
             logger.info(f"[Error] Simulation failed to generate network (either partially or fully), due to: {e}")
 
-        
+    def reload_all_people(self):
+        self.all_people = load_people("assets/people/generated_set.json")
+        self.all_name_index = {
+            (p.data.fname.lower(), p.data.lname.lower()): p
+            for p in self.all_people
+        }
+
+    def update_present_names(self, person, action):
+        if action.lower() == "add":
+            self.present_name_index[
+                (person.data.fname.lower(), person.data.lname.lower())
+                                ] = person
+
+        elif action.lower() == "remove":
+            del self.present_name_index[
+                (person.data.fname.lower(), person.data.lname.lower())]
+
+        else:
+            raise ValueError("(update_present_names) Invalid action.")
