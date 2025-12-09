@@ -30,6 +30,7 @@ class Person(Vertex):
     """
     def __init__(self, identity: Identity, edges: list = None) -> None:
         super().__init__(identity, edges)
+        # TODO: implement a friend list here
 
     def __eq__(self, other):
         return (
@@ -42,3 +43,5 @@ class Person(Vertex):
 
     def __str__(self):
         return f"{self.data.fname} {self.data.lname}"
+
+    

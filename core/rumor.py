@@ -1,4 +1,4 @@
-from core.matrixGraph import MatrixGraph
+from core.matrixGraph import *
 from core.graphInterface import GraphInterface
 from core.node import *
 import uuid
@@ -25,7 +25,7 @@ class Rumor():
         else:
             self.trust_graph = trust
 
-        self.spread_rumor(spreader)
+        self.spread_rumor()
 
 
     def check_friend_graph(self, graph):
@@ -62,12 +62,13 @@ class Rumor():
         if not spreader:
             spreader = self.spreader
         
-        spreader_friends = self.friend_graph.get_connections(spreader)
+        spreader_friends = self.friend_graph.get_connections(spreader, True)
         spread_bool = False
         selection_chance = 0
         trust_level = 0
 
         self.visited.add(spreader)
+        print(spreader)
         
         for friend in spreader_friends:
             # Make rumors spread semi-randomly and more strongly through close friends by checking edge strength and introducing a new RNG bool variable

@@ -86,7 +86,7 @@ class Interface:
                 logger.info(f"Unknown command: {command}")
         except Exception as e:
             logger.info(f"[Error] {e}")
-            #traceback.print_exc() # DEBUG
+            traceback.print_exc() # DEBUG
 
 
     def suppress_output(self):

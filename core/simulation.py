@@ -78,6 +78,9 @@ class Simulation():
                     # Make connection via interface command
                     self.interface.handle("connect", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
                         f"{picked[friend_index].data.fname.lower()} {picked[friend_index].data.lname.lower()}", weight])
+                    friends.append(picked[i])
+
+                logger.debug(f"{person} number of connections: {len(friends)}")
 
             self.interface.resume_output()
             logger.info("\nNetwork build successful!")

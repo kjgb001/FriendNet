@@ -283,11 +283,14 @@ def _set_trust(interface, graphs, a, b, weight):
 
 
 def spread_rumor(interface, graphs, spreader, target, rumor: str):
+    spreader = _resolve_person(interface, spreader, interface.sim.present_name_index)
+    target = _resolve_person(interface, target, interface.sim.present_name_index)
+
     rumor = Rumor(graphs["friends"], spreader, target, rumor)
     rumor.spread_rumor()
 
-    logger.info(f"{spreader} spread a rumor about {target} to {len(rumor)} people!\n")
-    logger.info("   " + rumor + "\n")
+    logger.info(f"\n{spreader} spread a rumor about {target} to {len(rumor)} people!\n")
+    logger.info(str(rumor) + "\n")
     logger.info("")
 
     return rumor
