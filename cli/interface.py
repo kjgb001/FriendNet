@@ -1,8 +1,11 @@
 from .parser import Parser
 from .commands import *
+from view.matplotlibVisualizer import MatplotlibVisualizer
+
 import logging
 import traceback
 import utils.logger as logger_mod
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +35,9 @@ COMMAND_MAP = {
 UNDIRECTED_COMMANDS = ["connect", "disconnect"]
 DIRECTED_COMMANDS = ["spread"]
 WEIGHTED_COMMANDS = ["strengthen", "weaken", "trust", "distrust"]
-DAG_COMMANDS = []
-
+# DAG_COMMANDS = []
+VIEW_COMMANDS = ["person", "kill", "reload", "connect", "disconnect",
+                 "strengthen", "weaken", "spread"] # Which commands require a view redraw
 
 class Interface:
     ''' CLI Interface '''
@@ -41,6 +45,7 @@ class Interface:
         self.parser = parser
         self.running = True
         self.sim = None
+        self.view = MatplotlibVisualizer()
 
         self.commands = {"help", "people", "person", "kill", "generate", "reload"}
         
@@ -58,7 +63,7 @@ class Interface:
 
     def run(self):
         ''' Starts the interactive cli. Calls parser then handles input while running. '''
-        print("\nWelcome to FriendNet! Please enter a command (type 'help' to see commands).\n")
+        logger.info("\nWelcome to FriendNet! Please enter a command (type 'help' to see commands).\n")
         while self.running:
             raw = input("> ")
             command, args = self.parser.parse(raw)
@@ -68,7 +73,7 @@ class Interface:
     def handle(self, command, args = None):
         ''' Check for command in the map. If present, retrieve value (method name in command.py)
         and call it, passing the graphs and args.'''
-        # TODO: Refactor to pass interface into commands and have people live in Simulation object
+        
         try:
             if command in self.commands:
                 func = COMMAND_MAP[command]
@@ -84,6 +89,10 @@ class Interface:
                     func(self, self.sim.graphs, *args)
             else:
                 logger.info(f"Unknown command: {command}")
+
+            if command in VIEW_COMMANDS:
+                self.view.redraw(self.sim)
+
         except Exception as e:
             logger.info(f"[Error] {e}")
             traceback.print_exc() # DEBUG

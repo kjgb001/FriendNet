@@ -19,7 +19,7 @@ def generate_random_batch(size: int):
         fname = entry["name"]["first"]
         lname = entry["name"]["last"]
         gender = entry["gender"]
-        picture = entry["picture"]["thumbnail"]
+        picture = entry["picture"]["large"]
         people.append(create_person(fname, lname, gender, picture))
 
     return people

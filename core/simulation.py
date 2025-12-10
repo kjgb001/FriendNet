@@ -26,7 +26,9 @@ class Simulation():
         self.interface.sim = self
         self.interface.command_init()
 
-        if populate:
+        self.populate = populate
+
+        if self.populate:
             self.build_network() # TODO: Accept any passed file and count
 
     
@@ -89,12 +91,15 @@ class Simulation():
         except Exception as e:
             logger.info(f"[Error] Simulation failed to generate network (either partially or fully), due to: {e}")
 
-    def reload_all_people(self):
-        self.all_people = load_people("assets/people/generated_set.json")
+    def reload_all_people(self, file: str = "generated_set", populate: bool = self.populate):
+        self.all_people = load_people(f"assets/people/{file}.json")
         self.all_name_index = {
             (p.data.fname.lower(), p.data.lname.lower()): p
             for p in self.all_people
         }
+        # TODO: Clear graphs and any stored state information, then call build network if populate is True
+        #if populate:
+
 
     def update_present_names(self, person, action):
         if action.lower() == "add":

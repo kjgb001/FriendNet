@@ -102,7 +102,7 @@ def generate_people(interface, graphs, number):
     new_people = build_set(number)
     save_people("assets/people/generated_set.json", new_people)
 
-    all_people.append(new_people)
+    interface.sim.all_people.append(new_people)
 
     logger.info(f"{number} people successfully generated!")
 

@@ -68,7 +68,6 @@ class Rumor():
         trust_level = 0
 
         self.visited.add(spreader)
-        print(spreader)
         
         for friend in spreader_friends:
             # Make rumors spread semi-randomly and more strongly through close friends by checking edge strength and introducing a new RNG bool variable
