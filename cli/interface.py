@@ -45,10 +45,14 @@ class Interface:
         self.parser = parser
         self.running = True
         self.sim = None
-        self.view = MatplotlibVisualizer()
+        self.view = None
+        self.suppress_view = False
 
         self.commands = {"help", "people", "person", "kill", "generate", "reload"}
         
+
+    def view_init(self, simulation):
+        self.view = MatplotlibVisualizer(simulation)
 
     def command_init(self):
         # Add commands based on graphs present
@@ -90,7 +94,7 @@ class Interface:
             else:
                 logger.info(f"Unknown command: {command}")
 
-            if command in VIEW_COMMANDS:
+            if command in VIEW_COMMANDS and not self.suppress_view:
                 self.view.redraw(self.sim)
 
         except Exception as e:
@@ -100,8 +104,10 @@ class Interface:
 
     def suppress_output(self):
         logger_mod.suppress_commands = True
+        self.suppress_view = True
     
     def resume_output(self):
         logger_mod.suppress_commands = False
+        self.suppress_view = False
 
 

@@ -23,13 +23,17 @@ class Simulation():
         }
         self.present_name_index = {}
 
+        # Pass self to interface and initialize interface valid commands (based on graphs present in self)
         self.interface.sim = self
         self.interface.command_init()
 
+        # Bool that determines if the sim auot-populates using build_network()
         self.populate = populate
-
         if self.populate:
             self.build_network() # TODO: Accept any passed file and count
+
+        # Initialize the view via interface. Executed last to ensure interface has the sim object and network is formed before view tries to access graphs.
+        self.interface.view_init(self)
 
     
     def build_network(self, file = "generated_set", count = 25):
@@ -91,7 +95,10 @@ class Simulation():
         except Exception as e:
             logger.info(f"[Error] Simulation failed to generate network (either partially or fully), due to: {e}")
 
-    def reload_all_people(self, file: str = "generated_set", populate: bool = self.populate):
+    def reload_all_people(self, file: str = "generated_set", populate: bool = None):
+        if not populate:
+            populate = self.populate
+
         self.all_people = load_people(f"assets/people/{file}.json")
         self.all_name_index = {
             (p.data.fname.lower(), p.data.lname.lower()): p
