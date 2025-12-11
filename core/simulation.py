@@ -68,7 +68,7 @@ class Simulation():
 
             # Assigns each person a number of total friends, chooses someone from the picked list, creates a randomized weight if the weighted graph is present, then connects them via command logic
             for person in picked:
-                friend_num = random.randint(0, 25) # Could be replaced with an algorithm to assign number of friends on a bell curve
+                friend_num = random.randint(1, 10) # Could be replaced with an algorithm to assign number of friends on a bell curve
                 friends = []
 
                 for i in range(friend_num):

@@ -296,6 +296,32 @@ def spread_rumor(interface, graphs, spreader, target, rumor: str):
     return rumor
 
 
+def change_view(interface, graphs, mode: str):
+    page = 0
+    already_set = False
+    if mode == "friends":
+        if interface.view.page == 0:
+            already_set = True
+        else:
+            interface.view.page = 0
+    elif mode == "gossip":
+        if interface.view.page == 1:
+            already_set = True
+        else:
+            interface.view.page = 1
+    elif mode == "trust":
+        if interface.view.page == 2:
+            already_set = True
+        else:
+            interface.view.page = 2
+    else:
+        raise ValueError(f"Incorrect view mode entered. Options: friends, gossip, trust. Entered: {mode}")
+
+    if already_set:
+        raise ValueError(f"View {mode} mode already active.")
+    
+
+
 def print_people(graphs):
     people = graphs["friends"].vertices
 

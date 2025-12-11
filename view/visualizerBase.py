@@ -8,52 +8,63 @@ class VisualizerBase(ABC):
     def redraw(self, simulation):
         pass
 
-    def gen_nx_graphs(self, simulation):
-        gossip = False
-        trust = False
-        # Initialize networkx graphs based on what is present, and set bools accordingly
-        nx_friend_graph = nx.Graph()
-        if "gossip" in simulation.graphs:
-            nx_gossip_graph = nx.DiGraph()
-            gossip = True
-        if "trust" in simulation.graphs:
-            nx_trust_graph = nx.DiGraph()
-            trust = True
+    @abstractmethod
+    def close(self):
+        pass
 
+    def _add_vertices(self, simulation, graph):
         # Add vertices to networkx graphs from friends graph
         for person in simulation.graphs["friends"].vertices:
-            nx_friend_graph.add_node(person)
-            if gossip:
-                nx_gossip_graph.add_node(person)
-            if trust:
-                nx_trust_graph.add_node(person)
+            graph.add_node(person)
 
-        # Add edges to networkx graphs, checking if friends graph is weighted or not
+
+    def _friends_graph(self, simulation, graph):
+        # Add edges to friends graph, checking if friends graph is weighted or not
         if type(simulation.graphs["friends"]) == WU_MatrixGraph:
             for (a, b) in simulation.graphs["friends"].edges:
-                nx_friend_graph.add_edge(a, b, weight = 
-                    simulation.graphs["friends"].get_edge(a, b))
+                graph.add_edge(
+                    simulation.graphs["friends"].vertices[a], 
+                    simulation.graphs["friends"].vertices[b], 
+                    weight = simulation.graphs["friends"].get_edge(a, b)
+                )
         else:
             for (a, b) in simulation.graphs["friends"].edges:
-                nx_friend_graph.add_edge(a, b)
+                graph.add_edge(
+                    simulation.graphs["friends"].vertices[a], 
+                    simulation.graphs["friends"].vertices[b]
+                )
 
-        if gossip:
-            for (a, b) in simulation.graphs["gossip"].edges:
-                nx_gossip_graph.add_edge(a, b)
-        if trust:
-            for (a, b) in simulation.graphs["trust"].edges:
-                nx_trust_graph.add_edge(a, b, weight = 
-                    simulation.graphs["trust"].get_edge(a, b))
+
+    def _gossip_graph(self, simulation, graph, rumor):
+        for (a, b) in rumor.graph.edges:
+                graph.add_edge(
+                    simulation.graphs["gossip"].vertices[a], 
+                    simulation.graphs["gossip"].vertices[b]
+                )
+
+
+    def _trust_graph(self, simulation, graph):
+        for (a, b) in simulation.graphs["trust"].edges:
+                graph.add_edge(
+                    simulation.graphs["trust"].vertices[a], 
+                    simulation.graphs["trust"].vertices[b], 
+                    weight = simulation.graphs["trust"].get_edge(a, b)
+                )
         
-        # Gather graphs into a set for return. Sets Nones to keep indexing consistent.
-        graphs = [nx_friend_graph]
-        if gossip:
-            graphs.append(nx_gossip_graph)
-        else:
-            graphs.append(None)
-        if trust:
-            graphs.append(nx_trust_graph)
-        else:
-            graphs.append(None)
 
-        return graphs
+    def gen_nx_graphs(self, simulation, graph_to_gen, rumor):
+        if graph_to_gen == 0:
+            nx_graph = nx.Graph()
+            self._add_vertices(simulation, nx_graph)
+            self._friends_graph(simulation, nx_graph)
+        else:
+            nx_graph = nx.DiGraph()
+            self._add_vertices(simulation, nx_graph)
+
+            if graph_to_gen == 1 and rumor:
+                self._gossip_graph(simulation, nx_graph, rumor)
+            else:
+                self._trust_graph(simulation, nx_graph)
+        
+        return nx_graph
+        
