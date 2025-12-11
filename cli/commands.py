@@ -305,6 +305,8 @@ def change_view(interface, graphs, mode: str):
         else:
             interface.view.page = 0
     elif mode == "gossip":
+        if len(interface.sim.rumors) < 0:
+            raise ValueError("No gossip to track.")
         if interface.view.page == 1:
             already_set = True
         else:

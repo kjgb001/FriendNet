@@ -103,7 +103,7 @@ class Interface:
                 logger.info(f"Unknown command: {command}")
 
             if command in VIEW_COMMANDS and not self.suppress_view:
-                rumor = self.sim.rumors[-1] if len(self.sim.rumors) > 0 else None
+                rumor = self.sim.rumors[-1]
                 self.view.redraw(self.sim, rumor)
 
         except Exception as e:
