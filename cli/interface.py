@@ -28,6 +28,7 @@ COMMAND_MAP = {
     "distrust": weaken_trust,
 
     "spread": spread_rumor,
+    "rumors": print_rumors,
 
     "view": change_view
     
@@ -50,7 +51,8 @@ class Interface:
         self.view = None
         self.suppress_view = False
 
-        self.commands = {"help", "people", "person", "kill", "generate", "reload", "view"}
+        self.commands = {"help", "people", "person", "kill", "generate", 
+                        "reload", "view", "rumors"}
         
 
     def view_init(self, simulation):
@@ -95,6 +97,8 @@ class Interface:
                     func(self.sim.graphs)
                 elif command == "spread":
                     self.sim.rumors.append(func(self, self.sim.graphs, *args))
+                elif command == "rumors":
+                    func(self.sim.rumors)
                 elif command == "reload":
                     func(self)
                 else:
@@ -103,7 +107,7 @@ class Interface:
                 logger.info(f"Unknown command: {command}")
 
             if command in VIEW_COMMANDS and not self.suppress_view:
-                rumor = self.sim.rumors[-1]
+                rumor = self.sim.rumors[-1] if len(self.sim.rumors) > 0 else None
                 self.view.redraw(self.sim, rumor)
 
         except Exception as e:

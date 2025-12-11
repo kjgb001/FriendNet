@@ -26,5 +26,12 @@ def generate_random_batch(size: int):
 
 
 def build_set(size: int):
-    return generate_random_batch(size)
+    people = generate_random_batch(size)
+    for person in people:
+        for p in people:
+            if p != person:
+                if p.data.fname == person.data.fname and p.data.lname == person.data.lname:
+                    people.remove(person)
+
+    return people
 

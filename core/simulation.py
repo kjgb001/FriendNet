@@ -4,6 +4,8 @@ from utils.peopleIO import *
 from core.matrixGraph import *
 import random
 import logging
+import math
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +38,7 @@ class Simulation():
         self.interface.view_init(self)
 
     
-    def build_network(self, file = "generated_set", count = 25):
+    def build_network(self, file = "generated_set", count = 50):
         ''' 
         Randomly collects [count] people from specified file in assets/people directory, 
         then adds them to the active graphs and randomly makes connections between them.
@@ -63,27 +65,47 @@ class Simulation():
             
             # Adds the selected person objects to the picked list and calls the interface to add them to the simulation via command logic
             for i in selected_indices:
-                picked.append(all_people[i])
                 self.interface.handle("person", [f"{all_people[i].data.fname.lower()} {all_people[i].data.lname.lower()}"])
+            picked = list(self.graphs["friends"].vertices)
 
-            # Assigns each person a number of total friends, chooses someone from the picked list, creates a randomized weight if the weighted graph is present, then connects them via command logic
+            # Determine who will seed clustering
+            seed_count = max(5, int(len(picked) * 0.15))  # ~15% of population, 5 baseline
+            seed_people = set(picked[:seed_count])
+
+            # Assigns each person a number of total connections, chooses someone from the picked list, creates a randomized weight if the weighted graph is present, then connects them via command logic
             for person in picked:
-                friend_num = random.randint(1, 10) # Could be replaced with an algorithm to assign number of friends on a bell curve
+                # Calculate number of connections with a normal distribution, then clamp values
+                num_mean = 5 # Sets the mean number of connections
+                num_standard_deviation = 1.5 * (num_mean / 5) # Sets deviation based on normalized mean
+                friend_num = int(random.gauss(num_mean, num_standard_deviation))
+                friend_num = max(1, min(friend_num, len(picked) - 1))
+
                 friends = []
 
                 for i in range(friend_num):
                     # Prevent self connection attempts
                     while True:
-                        friend_index = random.randint(0, len(picked)-1)
-                        if picked[friend_index] != person:
+                        friend = self.pick_friend(person, picked, self.graphs["friends"], seed_people)
+                        if friend != person:
                             break
 
-                    # Set weight if weighted friend graph in use
-                    weight = random.random() + 1 if type(self.graphs['friends']) == WU_MatrixGraph else None # Could be rewritten with a logarithmic probability curve to favor positive relationships over negative ones
+                    # Set weight using a half-normal distribution split then clamp, if weighted friend graph in use
+                    if type(self.graphs['friends']) == WU_MatrixGraph: 
+                        if random.random() < 0.75:
+                            # FRIEND distribution
+                            weight = random.gauss(1.7, 0.1)
+                        else:
+                            # ENEMY distribution
+                            weight = random.gauss(1.3, 0.1)
+                            # Enemy dampening: squash values near 1.0 upward
+
+                        weight = max(1.0, min(weight, 2.0))
+                    else:
+                        weight = None
 
                     # Make connection via interface command
                     self.interface.handle("connect", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
-                        f"{picked[friend_index].data.fname.lower()} {picked[friend_index].data.lname.lower()}", weight])
+                        f"{friend.data.fname.lower()} {friend.data.lname.lower()}", weight])
                     friends.append(picked[i])
 
                 logger.debug(f"{person} number of connections: {len(friends)}")
@@ -91,9 +113,34 @@ class Simulation():
             self.interface.resume_output()
             logger.info("\nNetwork build successful!")
 
-                
         except Exception as e:
             logger.info(f"[Error] Simulation failed to generate network (either partially or fully), due to: {e}")
+            traceback.print_exc() # DEBUG
+
+
+    def pick_friend(self, person, picked, friend_graph, seed_people):
+        # If person is one of the seeds set random friend
+        if person in seed_people:
+            return random.choice([p for p in picked if p != person])
+
+        # Non-seeds get cluster-building behavior
+        existing = set(friend_graph.get_neighbors(person))
+
+        triadic_candidates = set()
+        for f in existing:
+            triadic_candidates.update(friend_graph.get_neighbors(f))
+
+        # remove invalids
+        triadic_candidates.discard(person)
+        triadic_candidates -= existing
+
+        # strong closure bias
+        if triadic_candidates:
+            return random.choice(list(triadic_candidates))
+
+        # fallback: sparse cross-clique links
+        return random.choice([p for p in picked if p != person])
+
 
     def reload_all_people(self, file: str = "generated_set", populate: bool = None):
         if not populate:

@@ -81,7 +81,7 @@ class MatrixGraph(GraphInterface):
             raise ValueError("Edge must be a list of two integer indices.")
 
         if edge[0] == edge[1]:
-            raise ValueError("Vertex cannot have edge with itself.")
+            raise ValueError(f"Vertex cannot have edge with itself.")
 
         for i in edge:
             if not 0 <= i < len(self.vertices):
@@ -199,9 +199,23 @@ class MatrixGraph(GraphInterface):
 
         return self.matrix[edge[0]][edge[1]]
 
+    
+    def get_vertex_by_index(self, index):
+        for person, i in self._index_map.items():
+            if i == index:
+                return person
+            
+        raise ValueError("(get_vetex_by_index) Index not found in graph")
 
-    def get_out_connections(self, vertex, name: bool):
-        ''' Returns all outgoing connections for given vertex as a list of indices of connected vertices'''
+
+    def get_neighbors(self, vertex):
+        neighbors = set(self.get_in_connections(vertex, True))
+        neighbors.update(set(self.get_out_connections(vertex, True)))
+        return neighbors
+
+
+    def get_out_connections(self, vertex, entry: bool):
+        ''' Returns all outgoing connections for given vertex as a list of indices or entries of connected vertices'''
         edges = []
 
         for i in len(self.matrix):
@@ -209,7 +223,7 @@ class MatrixGraph(GraphInterface):
             
             if edge:
                 if edge != 0:
-                    if name:
+                    if entry:
                         edges.append(self.vertices[i])
                     else:
                         edges.append(i)
@@ -292,8 +306,13 @@ class U_MatrixGraph(MatrixGraph):
         self.matrix[edge[1]][edge[0]] = 0
 
 
-    def get_connections(self, vertex, names : bool):
-        ''' Returns all connections for given vertex as a list of indices of connected vertices'''
+    def get_neighbors(self, vertex):
+        neighbors = set(self.get_connections(vertex, True))
+        return neighbors
+
+
+    def get_connections(self, vertex, entry: bool):
+        ''' Returns all connections for given vertex as a list of indices or entries of connected vertices'''
         edges = []
 
         for i in range(len(self.matrix)):
@@ -301,7 +320,7 @@ class U_MatrixGraph(MatrixGraph):
             
             if edge:
                 if edge != 0:
-                    if names:
+                    if entry:
                         edges.append(self.vertices[i])
                     else:
                         edges.append(i)
@@ -510,8 +529,13 @@ class WU_MatrixGraph(W_MatrixGraph):
         self._check_weight(tuple_edge, self.matrix[edge[0]][edge[1]])
 
 
-    def get_connections(self, vertex, names : bool):
-        ''' Returns all connections for given vertex as a list of indices of connected vertices'''
+    def get_neighbors(self, vertex):
+        neighbors = set(self.get_connections(vertex, True))
+        return neighbors
+
+
+    def get_connections(self, vertex, entry: bool):
+        ''' Returns all connections for given vertex as a list of indices or entries of connected vertices'''
         edges = []
 
         for i in range(len(self.matrix)):
@@ -519,7 +543,7 @@ class WU_MatrixGraph(W_MatrixGraph):
             
             if edge:
                 if edge != 0:
-                    if names:
+                    if entry:
                         edges.append(self.vertices[i])
                     else:
                         edges.append(i)

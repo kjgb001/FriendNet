@@ -30,7 +30,16 @@ class MatplotlibVisualizer(VisualizerBase):
         
         # Update positions only if they don't exist or node count changes
         if self.positions is None or len(self.positions) != nx_graph.number_of_nodes():
-            self.positions = nx.spring_layout(nx_graph)
+            # Build a graph containing ONLY friend edges
+            layout_graph = nx.Graph()
+            layout_graph.add_nodes_from(nx_graph.nodes)
+
+            for u, v, data in nx_graph.edges(data=True):
+                if data.get("weight", 1.5) > 1.5:
+                    layout_graph.add_edge(u, v, weight = data["weight"] - 1.0)
+
+            self.positions = nx.spring_layout(layout_graph, weight="weight", k=2.0, # increases desired inter-node distance
+                                            iterations=200, scale=4.0) # spreads clusters outward
 
         # Clear the visualization for redraw
         self.ax.clear()
