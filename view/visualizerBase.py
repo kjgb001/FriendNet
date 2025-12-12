@@ -22,56 +22,54 @@ class VisualizerBase(ABC):
     def _friends_graph(self, simulation, graph):
         # Add edges to friends graph, checking if friends graph is weighted or not
         if type(simulation.graphs["friends"]) == WU_MatrixGraph:
-            for (a, b) in simulation.graphs["friends"].edges:
-                u = simulation.graphs["friends"].vertices[a]
-                v = simulation.graphs["friends"].vertices[b]
+            vertices = simulation.graphs["friends"].get_vertices()
+            for (a, b) in simulation.graphs["friends"].get_edges():
+                u = vertices[a]
+                v = vertices[b]
 
                 if u is None or v is None:
                     continue  # skip dead edges
 
                 graph.add_edge(
-                    simulation.graphs["friends"].vertices[a], 
-                    simulation.graphs["friends"].vertices[b], 
-                    weight = simulation.graphs["friends"].get_edge(a, b)
+                    u, v, weight = simulation.graphs["friends"].get_edge(a, b)
                 )
         else:
-            for (a, b) in simulation.graphs["friends"].edges:
-                u = simulation.graphs["friends"].vertices[a]
-                v = simulation.graphs["friends"].vertices[b]
+            vertices = simulation.graphs["friends"].get_vertices()
+            for (a, b) in simulation.graphs["friends"].get_edges():
+                u = vertices[a]
+                v = vertices[b]
 
                 if u is None or v is None:
                     continue  # skip dead edges
                 graph.add_edge(
-                    simulation.graphs["friends"].vertices[a], 
-                    simulation.graphs["friends"].vertices[b]
+                    u, v
                 )
 
 
     def _gossip_graph(self, simulation, graph, rumor):
-        for (a, b) in rumor.graph.edges:
-            u = simulation.graphs["gossip"].vertices[a]
-            v = simulation.graphs["gossip"].vertices[b]
+        vertices = rumor.graph.get_vertices()
+        for (a, b) in rumor.graph.get_edges():
+            u = vertices[a]
+            v = vertices[b]
 
             if u is None or v is None:
                 continue  # skip dead edges
 
             graph.add_edge(
-                simulation.graphs["gossip"].vertices[a], 
-                simulation.graphs["gossip"].vertices[b]
+                u, v
             )
 
 
     def _trust_graph(self, simulation, graph):
-        for (a, b) in simulation.graphs["trust"].edges:
-            u = simulation.graphs["trust"].vertices[a]
-            v = simulation.graphs["trust"].vertices[b]
+        vertices = simulation.graphs["trust"].get_vertices()
+        for (a, b) in simulation.graphs["trust"].get_edges():
+            u = vertices[a]
+            v = vertices[b]
 
             if u is None or v is None:
                 continue  # skip dead edges
             graph.add_edge(
-                simulation.graphs["trust"].vertices[a], 
-                simulation.graphs["trust"].vertices[b], 
-                weight = simulation.graphs["trust"].get_edge(a, b)
+                u, v, weight = simulation.graphs["trust"].get_edge(a, b)
             )
         
 

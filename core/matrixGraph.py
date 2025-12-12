@@ -200,6 +200,14 @@ class MatrixGraph(GraphInterface):
         return self.matrix[edge[0]][edge[1]]
 
     
+    def get_edges(self):
+        return self.edges
+
+
+    def get_vertices(self):
+        return self.vertices
+
+    
     def get_vertex_by_index(self, index):
         for person, i in self._index_map.items():
             if i == index:
@@ -218,7 +226,7 @@ class MatrixGraph(GraphInterface):
         ''' Returns all outgoing connections for given vertex as a list of indices or entries of connected vertices'''
         edges = []
 
-        for i in len(self.matrix):
+        for i in range(len(self.matrix)):
             edge = self.get_edge(vertex, i)
             
             if edge:
@@ -235,7 +243,7 @@ class MatrixGraph(GraphInterface):
         ''' Returns all incoming connections for given vertex as a list of indices of connected vertices'''
         edges = []
 
-        for i in len(self.matrix):
+        for i in range(len(self.matrix)):
             edge = self.get_edge(i, vertex)
             
             if edge:

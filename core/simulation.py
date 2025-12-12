@@ -77,7 +77,7 @@ class Simulation():
             # Adds the selected person objects to the picked list and calls the interface to add them to the simulation via command logic
             for i in selected_indices:
                 self.interface.handle("person", [f"{all_people[i].data.fname.lower()} {all_people[i].data.lname.lower()}"])
-            picked = list(self.graphs["friends"].vertices)
+            picked = list(self.graphs["friends"].get_vertices())
 
             # Determine who will seed clustering
             seed_count = max(5, int(len(picked) * 0.15))  # ~15% of population, 5 baseline

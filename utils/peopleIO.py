@@ -28,8 +28,11 @@ def load_people(path: str) -> list:
     file_path = Path(path)
     try:
         data = json.loads(file_path.read_text())
-    except (FileNotFoundError, json.JSONDecodeError):
-        print("Could not read JSON file. Is it empty, was it manually edited?")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        if isinstance(e, json.JSONDecodeError):
+            print("Could not read JSON file.") # Replace with logging
+        elif isinstance(e, FileNotFoundError):
+            print("File does not exist.") # Replace with logging
         data = []
 
     people = []

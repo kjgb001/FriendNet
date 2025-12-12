@@ -332,7 +332,7 @@ def change_view(interface, graphs, mode: str):
 
 
 def print_people(graphs):
-    people = graphs["friends"].vertices
+    people = graphs["friends"].get_vertices()
 
     logger.info("\nAll people present:\n")
     for person in people:

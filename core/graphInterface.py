@@ -21,22 +21,46 @@ class GraphInterface(ABC):
         return len(self.vertices)
 
     def __str__(self):
-        # Could dynamically pad instead of hard coding 5
         if not self.vertices:
             return "[Empty Graph]"
 
-        # Filter to live vertices
         active = [(i, v) for i, v in enumerate(self.vertices) if v is not None]
 
-        header = "    " + " ".join(f"{v:>5}" for _, v in active)
+        return f"Vertices: {len(active)}, Edges: {len(self.edges)}"
+
+    def debug_matrix(self):
+        if not self.vertices:
+            return "[Empty Graph]"
+
+        # Collect active vertices: (index, Person)
+        active = [(i, v) for i, v in enumerate(self.vertices) if v is not None]
+
+        # Header row, indexes only
+        header = "     " + " ".join(f"{i:>6}" for i, _ in active)
+
         rows = []
         for i, v in active:
-            # Only include columns for active vertices
-            row_vals = [
-                f"{self.matrix[i][j]:>5}" 
-                for j, col_v in enumerate(self.vertices) if col_v is not None
-            ]
-            rows.append(f"{v:>3} " + " ".join(row_vals))
-        return f"{header}\n" + "\n".join(rows) + (
-            f"\n\nVertices: {len(active)}, Edges: {len(self.edges)}"
+            row_vals = []
+            for j, v2 in active:
+                val = self.matrix[i][j]
+
+                if val == 0:
+                    row_vals.append("     .")
+                else:
+                    row_vals.append(f"{val:>6.2f}")  # width 6, 2 decimals
+
+            rows.append(f"{i:>3} | " + " ".join(row_vals))
+
+        # Optional: map index, name for readability
+        name_map = "\n".join(
+            f"  {i:>3} = {v.data.fname} {v.data.lname}"
+            for i, v in active
+        )
+
+        return (
+            f"{header}\n" +
+            "\n".join(rows) +
+            "\n\nIndex map:\n" +
+            name_map +
+            "\n"
         )

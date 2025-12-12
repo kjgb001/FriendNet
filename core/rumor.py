@@ -11,7 +11,7 @@ class Rumor():
         self.uid = uuid.uuid4()
         self.friend_graph = self.check_friend_graph(friend_graph)
 
-        rumor_graph = MatrixGraph(list(self.friend_graph.vertices), None)
+        rumor_graph = MatrixGraph(list(self.friend_graph.get_vertices()), None)
         self.graph = rumor_graph
 
         self.spreader = spreader
@@ -53,8 +53,9 @@ class Rumor():
         self.friend_graph = self.check_friend_graph(graph)
         
         for i in range(len(graph)):
-            if graph.vertices[i] not in self.graph.vertices:
-                self.graph.add_vertex(graph.vertices[i])
+            new_vertices = graph.get_vertices()
+            if new_vertices[i] not in self.graph.get_vertices():
+                self.graph.add_vertex(new_vertices[i])
 
 
     def spread_rumor(self, spreader = None):
@@ -62,7 +63,7 @@ class Rumor():
         if not spreader:
             spreader = self.spreader
         
-        spreader_friends = self.friend_graph.get_connections(spreader, True)
+        spreader_friends = self.friend_graph.get_neighbors(spreader)
         spread_bool = False
         selection_chance = 0
         trust_level = 0
@@ -111,8 +112,8 @@ class Rumor():
     def __len__(self):
         # Count edges in the rumor graph
         edge_count = sum(
-            1 for i in range(len(self.graph.vertices))
-            for j in range(len(self.graph.vertices))
+            1 for i in range(len(self.graph.get_vertices()))
+            for j in range(len(self.graph.get_vertices()))
             if self.graph.get_edge(i, j) not in (None, 0)
         )
         return edge_count
