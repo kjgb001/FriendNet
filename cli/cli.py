@@ -21,8 +21,9 @@ def main():
     graphs = build_graphs(args.rep, load_list)
 
     # Call start here once profile generation and preloaded network setups are ready
-    pop_bool = args.populate
-    sim = Simulation(graphs, interface, pop_bool)
+    populate = args.populate
+    location = args.location
+    sim = Simulation(graphs, interface, populate if populate else None, location)
     
     interface.sim = sim
     interface.run()
@@ -48,8 +49,18 @@ def parse_arguments():
 
     parser.add_argument(
         "--populate",
-        action="store_true",
-        help="Auto-populate the graph on startup"
+        nargs = "?",
+        const = 50,
+        type = int,
+        default = None,
+        help="Auto-populate the graph on startup with n people"
+    )
+
+    parser.add_argument(
+        "--location",
+        default = "generated_set",
+        type = str,
+        help="Choose which directory to store and retrieve people from."
     )
 
     return parser.parse_args()

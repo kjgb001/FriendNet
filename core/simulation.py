@@ -11,13 +11,13 @@ logger = logging.getLogger(__name__)
 
 class Simulation():
     
-    def __init__(self, graphs, interface, populate, 
-        people_location = "generated_set", count = 50): # create new args in cli.py
+    def __init__(self, graphs, interface, population_count, 
+        people_location = "generated_set"): # create new args in cli.py
         self.graphs = graphs
         self.interface = interface
         self.parser = Parser()
         self.rumors = []
-        self.count = count
+        self.count = 0
 
         # Store all people and association indices here
         self.all_people = load_people(f"assets/people/{people_location}.json")
@@ -32,8 +32,10 @@ class Simulation():
         self.interface.command_init()
 
         # Bool that determines if the sim auot-populates using build_network()
-        self.populate = populate
+        self.populate = True if population_count else False
+        self.people_location = people_location
         if self.populate:
+            self.count = population_count
             self.build_network(people_location) # TODO: Accept any passed file and count
 
         # Build image map for visualizer to pull from
@@ -60,7 +62,7 @@ class Simulation():
             # Checks if there are enough people for random selection (minimum of twice the chosen count), and generates the difference if not.
             if len(all_people) < count * 2 or not all_people:
                 count_diff = (count * 2) - len(all_people)
-                self.interface.handle("generate", [count_diff])
+                self.interface.handle("generate", [count_diff, file])
                 self.interface.handle("reload")
                 all_people = load_people("assets/people/"+file+".json")
                 
@@ -151,17 +153,15 @@ class Simulation():
         return random.choice([p for p in picked if p != person])
 
 
-    def reload_all_people(self, file: str = "generated_set", populate: bool = None):
-        if not populate:
-            populate = self.populate
-
+    def reload_all_people(self, file: str = None):
+        if not file:
+            file = self.people_location
+            
         self.all_people = load_people(f"assets/people/{file}.json")
         self.all_name_index = {
             (p.data.fname.lower(), p.data.lname.lower()): p
             for p in self.all_people
         }
-        # TODO: Clear graphs and any stored state information, then call build network if populate is True
-        #if populate:
 
 
     def update_present_names(self, person, action):

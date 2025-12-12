@@ -109,7 +109,7 @@ def build_set(size: int, location = "generated_set", existing = None):
 
     # If duplicates exist, recursively generate replacements
     if duplicates > 0:
-        return build_set(duplicates, unique_people)
+        return build_set(duplicates, location, unique_people)
 
     return unique_people
 
