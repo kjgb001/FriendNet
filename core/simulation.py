@@ -11,14 +11,16 @@ logger = logging.getLogger(__name__)
 
 class Simulation():
     
-    def __init__(self, graphs, interface, populate):
+    def __init__(self, graphs, interface, populate, 
+        people_location = "generated_set", count = 50): # create new args in cli.py
         self.graphs = graphs
         self.interface = interface
         self.parser = Parser()
         self.rumors = []
+        self.count = count
 
         # Store all people and association indices here
-        self.all_people = load_people("assets/people/generated_set.json")
+        self.all_people = load_people(f"assets/people/{people_location}.json")
         self.all_name_index = {
             (p.data.fname.lower(), p.data.lname.lower()): p
             for p in self.all_people
@@ -32,18 +34,25 @@ class Simulation():
         # Bool that determines if the sim auot-populates using build_network()
         self.populate = populate
         if self.populate:
-            self.build_network() # TODO: Accept any passed file and count
+            self.build_network(people_location) # TODO: Accept any passed file and count
+
+        # Build image map for visualizer to pull from
+        self.image_map = {
+            person: person.data.picture 
+            for person in self.all_people
+           }
 
         # Initialize the view via interface. Executed last to ensure interface has the sim object and network is formed before view tries to access graphs.
         self.interface.view_init(self)
 
     
-    def build_network(self, file = "generated_set", count = 50):
+    def build_network(self, file = "generated_set"):
         ''' 
         Randomly collects [count] people from specified file in assets/people directory, 
         then adds them to the active graphs and randomly makes connections between them.
         '''
         try:
+            count = self.count
             self.interface.suppress_output()
             # Get people from specified file and 
             all_people = load_people("assets/people/"+file+".json")
@@ -75,7 +84,7 @@ class Simulation():
             # Assigns each person a number of total connections, chooses someone from the picked list, creates a randomized weight if the weighted graph is present, then connects them via command logic
             for person in picked:
                 # Calculate number of connections with a normal distribution, then clamp values
-                num_mean = 5 # Sets the mean number of connections
+                num_mean = 3 # Sets the mean number of connections
                 num_standard_deviation = 1.5 * (num_mean / 5) # Sets deviation based on normalized mean
                 friend_num = int(random.gauss(num_mean, num_standard_deviation))
                 friend_num = max(1, min(friend_num, len(picked) - 1))

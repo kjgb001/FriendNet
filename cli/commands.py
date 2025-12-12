@@ -36,7 +36,7 @@ def _resolve_person(interface, name_str, name_index):
     if len(tokens) > 1:
         lname = " ".join(tokens[1:]).lower()
 
-    # --- Case 1: Only first name given ---
+    # If only first name given
     if lname is None:
         matches = [
             person
@@ -56,7 +56,7 @@ def _resolve_person(interface, name_str, name_index):
 
         return matches[0]
 
-    # --- Case 2: Full name given ---
+    # If full name given
     key = (fname, lname)
     if key not in name_index:
         raise ValueError(f"No person found with name '{fname} {lname}'.")
@@ -97,10 +97,12 @@ def remove_person(interface, graphs, name_str):
     logger.info(f"{person} successfully removed.")
 
 
-def generate_people(interface, graphs, number):
+def generate_people(interface, graphs, number, location = "generated_set"):
     number = int(number)
-    new_people = build_set(number)
-    save_people("assets/people/generated_set.json", new_people)
+    if number > 5000:
+        raise ValueError(f"Too many people to generate. Number must be five thousand or less, got {number}")
+    new_people = build_set(number, location)
+    save_people(f"assets/people/{location}.json", new_people)
 
     interface.sim.all_people.append(new_people)
 
