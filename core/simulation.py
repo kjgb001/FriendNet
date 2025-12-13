@@ -161,6 +161,7 @@ class Simulation():
             (p.data.fname.lower(), p.data.lname.lower()): p
             for p in self.all_people
         }
+        logger.info(f"People reloaded from {file}.\n")
 
 
     def update_present_names(self, person, action):

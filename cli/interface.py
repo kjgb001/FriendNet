@@ -92,7 +92,7 @@ class Interface:
             if command in self.commands:
                 func = COMMAND_MAP[command]
                 if command == "help":
-                    func(self.sim.graphs, self.commands)
+                    func(self.sim.graphs, self.commands, *args)
                 elif command == "people":
                     func(self.sim.graphs)
                 elif command == "spread":

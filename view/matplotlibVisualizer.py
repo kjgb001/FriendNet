@@ -1,8 +1,11 @@
 from .visualizerBase import VisualizerBase
+import os
+os.environ["QT_LOGGING_RULES"] = "*.debug=false;*.warning=false" # Force Qt to stop whining about not getting window focus
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib import transforms
+from PySide6 import QtCore
 import networkx as nx
 import math
 
@@ -24,7 +27,13 @@ class MatplotlibVisualizer(VisualizerBase):
             sys.exit(0)
         self.fig.canvas.mpl_connect("close_event", _on_close)
 
-        plt.show()
+        manager = plt.get_current_fig_manager()
+        window = manager.window
+        # Force Qt to stop stealing window focus
+        window.setAttribute(QtCore.Qt.WA_ShowWithoutActivating, True)
+        window.setWindowFlag(QtCore.Qt.WindowDoesNotAcceptFocus, True)
+
+        window.show()
         self.redraw(simulation)
 
     def close(self):
@@ -43,9 +52,13 @@ class MatplotlibVisualizer(VisualizerBase):
             layout_graph = nx.Graph()
             layout_graph.add_nodes_from(nx_graph.nodes)
 
-            for u, v, data in nx_graph.edges(data=True):
-                if data.get("weight", 1.5) > 1.5:
-                    layout_graph.add_edge(u, v, weight = data["weight"] - 1.0)
+            # Add edges to position graph if they are friendships, with a fallback for un-weighted friend graphs
+            for u, v, data in nx_graph.edges(data = True):
+                w = data.get("weight")
+                if w is None:
+                    layout_graph.add_edge(u, v, weight = 0.6)
+                elif w > 1.55:
+                    layout_graph.add_edge(u, v, weight = w - 1.0)
 
             scale = 2 + math.log(simulation.count) # Area grows with log(n)
             # Compute the theoretical FR optimal edge length
@@ -66,7 +79,7 @@ class MatplotlibVisualizer(VisualizerBase):
         widths = []
 
         for u, v in nx_graph.edges():
-            w = nx_graph[u][v].get("weight", 1.5) # default to neutral
+            w = nx_graph[u][v].get("weight", 1.75) # default to friend
 
             # Set color
             if w > 1.55:
@@ -109,7 +122,7 @@ class MatplotlibVisualizer(VisualizerBase):
             self.draw_labels()
 
         # Draw to matplotlib figure, flush, and pause for smoothness
-        self.fig.canvas.draw()
+        self.fig.canvas.draw_idle()
         self.fig.canvas.flush_events()
         plt.pause(0.001)
 

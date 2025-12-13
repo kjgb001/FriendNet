@@ -153,6 +153,7 @@ def strengthen_edge(interface, graphs, a, b, weight):
         return
 
     graphs["friends"].strengthen_edge(a, b, weight)
+    friendship = graphs["friends"].get_edge(a, b)
 
     if friendship == 2.0:
         logger.info(f"{a} and {b} are now best friends!")
@@ -175,6 +176,7 @@ def weaken_edge(interface, graphs, a, b, weight):
         return
 
     graphs["friends"].weaken_edge(a, b, weight)
+    friendship = graphs["friends"].get_edge(a, b)
 
     if friendship == 1.0:
         logger.info(f"{a} and {b} are now arch-enemies.")
@@ -198,12 +200,12 @@ def strengthen_trust(interface, graphs, a, b, weight = None):
     if trust == 0:
         raise ValueError(f"{a} and {b} don't know each other.")
 
-
     if trust == 2.0:
         logger.info(f"{a} already trusts {b} completely!")
         return
 
     graphs["trust"].strengthen_edge(a, b, weight)
+    trust = graphs["trust"].get_edge(a, b)
 
     if trust == 2.0:
         logger.info(f"{a} now trusts {b} completely!")
@@ -227,16 +229,19 @@ def weaken_trust(interface, graphs, a, b, weight = None):
     if trust == 0:
         raise ValueError(f"{a} and {b} don't know each other.")
 
+    '''
     if trust == 0:
         weight = 1.5 - weight
         weight = clip(weight, 1.0, 2.0)
         _set_trust(interface, a, b)
+    '''
 
     if trust == 1.0:
         logger.info(f"{a} already doesn't trust {b} at all.")
         return
 
     graphs["trust"].weaken_edge(a, b, weight)
+    trust = graphs["trust"].get_edge(a, b)
 
     if trust == 1.0:
         logger.info(f"{a} now doesn't trust {b} at all.")
@@ -342,9 +347,58 @@ def print_people(graphs):
     logger.info("")
 
 
-def help_user(graphs, commands):
-    # Print the commands that are available based on graphs
-    logger.info("\nAvailable commands:\n")
-    for cmd in sorted(commands):
-        logger.info(f"    {cmd}")
-    logger.info("")
+def help_user(graphs, commands, query = None):
+    if query:
+        if query in commands:
+            match query:
+                case "person":
+                    logger.info("Adds a person from the local database by name. Takes one argument.")
+                case "people":
+                    logger.info("Lists all people present in the simulation. Takes zero arguments.")
+                case "kill":
+                    logger.info("Removes a person from the simulation. Takes one argument.")
+                case "help":
+                    logger.info("Prints all available commands if given no arguments. Prints details of a command if given the command as an argument. Takes one-two arguments.")
+                case "generate":
+                    logger.info("Creates x (int) new people by calling the Randomuser.me API. Takes on argument.")
+                case "reload":
+                    logger.info("Reloads the simulation's internal person registry from given file in assets/people. Uses default location if no argument is given. Takes zero-one argument.")
+                case "connect":
+                    logger.info("Connects two people. Weight can be given as a third argument if using a weighted graph, but will default to neutral otherwise. Takes two-three arguments.")
+                case "disconnect":
+                    logger.info("Disconnects two people. Takes two arguments.")
+                case "strengthen":
+                    logger.info("Increases friendship level between two people. Any number (float) >= 1 will always max friendship level. Takes three arguments.")
+                case "weaken":
+                    logger.info("Decreases friendship level between two people. Any number (float) >= 1 will always min friendship level. Takes three arguments.")
+                case "trust":
+                    logger.info("Increases trust level of first person for second person. Any number (float) >= 1 will always max trust level. Takes three arguments.")
+                case "distrust":
+                    logger.info("Decreases trust level of first person for second person. Any number (float) >= 1 will always min trust level. Takes three arguments.")
+                case "spread":
+                    logger,info("Spreads a rumor: First argument is the name of the spreader, second is the name of the target of the rumor, and third is the string representing the contents of the rumor.")
+                case "rumors":
+                    logger.info("Prints full history of rumors in simulation instance. Takes zero arguments.")
+                case "view":
+                    logger.info("Takes on argument: 'friends' to see friendships, 'gossip' to see the latest rumor, and 'trust' to see trust levels")
+                case _:
+                    raise ValueError(f"help: command '{query}' not found.")
+        else:
+            raise ValueError(f"help: command '{query}' not found.")
+        logger.info("")
+
+    else:
+        COMMAND_ORDER = [
+            "help", "generate", "reload", "people", "person", "kill",
+            "connect", "disconnect",
+            "strengthen", "weaken",
+            "trust", "distrust",
+            "spread", "rumors",
+            "view"
+        ]
+        # Print the commands that are available based on graphs
+        logger.info("\nAvailable commands:\n")
+        for cmd in COMMAND_ORDER:
+            if cmd in commands:
+                logger.info(f"    {cmd}")
+        logger.info("")
