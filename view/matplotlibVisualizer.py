@@ -101,12 +101,12 @@ class MatplotlibVisualizer(VisualizerBase):
             nx.draw_networkx_edges(nx_graph, self.positions, ax = self.ax,
                 arrows = True)
             self.draw_node_images(self.ax, self.positions)
-            self.draw_labels(nx_graph, label_positions)
+            self.draw_labels()
         else: # Trust Graph
             nx.draw_networkx_edges(nx_graph, self.positions, ax = self.ax,
                 edge_color = colors, width = widths, style = "dotted")
             self.draw_node_images(self.ax, self.positions)
-            self.draw_labels(nx_graph, label_positions)
+            self.draw_labels()
 
         # Draw to matplotlib figure, flush, and pause for smoothness
         self.fig.canvas.draw()

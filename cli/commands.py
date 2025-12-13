@@ -292,13 +292,14 @@ def spread_rumor(interface, graphs, spreader, target, rumor: str):
     rumor.spread_rumor()
 
     logger.info(f"\n{spreader} spread a rumor about {target} to {len(rumor)} people!\n")
-    logger.info(str(rumor) + "\n")
-    logger.info("")
+    logger.info(str(rumor.summary()) + "\n")
 
     return rumor
 
 
 def print_rumors(rumors):
+    if len(rumors) < 1:
+        logger.info("No rumors to show.\n")
     for i in rumors:
         logger.info(i)
 
@@ -336,7 +337,8 @@ def print_people(graphs):
 
     logger.info("\nAll people present:\n")
     for person in people:
-        logger.info(f"    {person}")
+        if person:
+            logger.info(f"    {person}")
     logger.info("")
 
 

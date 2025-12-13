@@ -71,19 +71,19 @@ def build_graphs(rep, load_list):
 
     if "weighted" in load_list:
         graphs["friends"] = (
-            WU_MatrixGraph(None, None, None) #if rep == "matrix"
+            WU_MatrixGraph() #if rep == "matrix"
         )
         graphs["trust"] = (
-            W_MatrixGraph(None, None, None) #if rep == "matrix"
+            W_MatrixGraph() #if rep == "matrix"
         )
     elif "undirected" in load_list:
         graphs["friends"] = (
-            U_MatrixGraph(None, None) #if rep == "matrix"
+            U_MatrixGraph() #if rep == "matrix"
         )
 
     if "directed" in load_list:
         graphs["gossip"] = (
-            MatrixGraph(None, None) #if rep =="matrix"
+            MatrixGraph() #if rep =="matrix"
         )
 
     # Add DAG once implemented

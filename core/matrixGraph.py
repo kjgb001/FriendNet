@@ -11,7 +11,7 @@ class MatrixGraph(GraphInterface):
     of integers representing the indexes of two vertices.
     '''
     # Could rewrite class to allow either index based OR vertex object based edges
-    def __init__(self, vertices: list | None, edges: list[list[int]] | None, weights: dict = None) -> None:
+    def __init__(self, vertices: list | None = None, edges: list[list[int]] | None = None, weights: dict = None) -> None:
         if vertices is None:
             vertices = []
         
@@ -207,14 +207,6 @@ class MatrixGraph(GraphInterface):
     def get_vertices(self):
         return self.vertices
 
-    
-    def get_vertex_by_index(self, index):
-        for person, i in self._index_map.items():
-            if i == index:
-                return person
-            
-        raise ValueError("(get_vetex_by_index) Index not found in graph")
-
 
     def get_neighbors(self, vertex):
         neighbors = set(self.get_in_connections(vertex, True))
@@ -338,7 +330,7 @@ class U_MatrixGraph(MatrixGraph):
 
 class W_MatrixGraph(MatrixGraph):
     
-    def __init__(self, vertices: list, edges: list[list[int]] | None, weights: dict) -> None:
+    def __init__(self, vertices: list = None, edges: list[list[int]] | None = None, weights: dict = None) -> None:
         if vertices == None:
             vertices = []
         

@@ -96,19 +96,18 @@ class Simulation():
                 for i in range(friend_num):
                     # Prevent self connection attempts
                     while True:
-                        friend = self.pick_friend(person, picked, self.graphs["friends"], seed_people)
+                        friend = self.pick_connection(person, picked, self.graphs["friends"], seed_people)
                         if friend != person:
                             break
 
                     # Set weight using a half-normal distribution split then clamp, if weighted friend graph in use
                     if type(self.graphs['friends']) == WU_MatrixGraph: 
-                        if random.random() < 0.75:
+                        if random.random() < 0.85: # Higher == More likely to be friends. Lower == More likely to be enemies.
                             # FRIEND distribution
                             weight = random.gauss(1.7, 0.1)
                         else:
                             # ENEMY distribution
                             weight = random.gauss(1.3, 0.1)
-                            # Enemy dampening: squash values near 1.0 upward
 
                         weight = max(1.0, min(weight, 2.0))
                     else:
@@ -129,7 +128,7 @@ class Simulation():
             traceback.print_exc() # DEBUG
 
 
-    def pick_friend(self, person, picked, friend_graph, seed_people):
+    def pick_connection(self, person, picked, friend_graph, seed_people):
         # If person is one of the seeds set random friend
         if person in seed_people:
             return random.choice([p for p in picked if p != person])

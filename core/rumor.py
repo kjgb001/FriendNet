@@ -71,6 +71,10 @@ class Rumor():
         self.visited.add(spreader)
         
         for friend in spreader_friends:
+            # Prevent target of rumor from spreading it, and apply 10% chance of no spread regardless of other factors
+            if spreader == self.target or random.random() < 0.1:
+                break
+
             # Make rumors spread semi-randomly and more strongly through close friends by checking edge strength and introducing a new RNG bool variable
             if type(self.friend_graph) == WU_MatrixGraph:
                 selection_chance = (self.friend_graph.get_edge(spreader, friend) - 1) * 1.5 # subtract one to normalize value then increase by 50% to soften probabilistic curve
@@ -118,8 +122,11 @@ class Rumor():
         )
         return edge_count
 
-
     def __str__(self):
+        return self.rumor
+
+
+    def summary(self):
         '''Return a human-readable summary of the rumor and its propagation.'''
         lines = [
             f"Rumor ID: {self.uid}",

@@ -36,11 +36,11 @@ COMMAND_MAP = {
 }
 
 UNDIRECTED_COMMANDS = ["connect", "disconnect"]
-DIRECTED_COMMANDS = ["spread"]
+DIRECTED_COMMANDS = ["spread", "rumors"]
 WEIGHTED_COMMANDS = ["strengthen", "weaken", "trust", "distrust"]
 # DAG_COMMANDS = []
 VIEW_COMMANDS = ["person", "kill", "reload", "connect", "disconnect",
-                 "strengthen", "weaken", "spread", "view"] # Which commands require a view redraw
+                 "strengthen", "weaken", "spread", "view", "trust", "distrust"] # Which commands require a view redraw
 
 class Interface:
     ''' CLI Interface '''
