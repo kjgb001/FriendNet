@@ -3,7 +3,7 @@ from .node import *
 from .graphInterface import GraphInterface
 import numbers
 
-class MatrixGraph(GraphInterface):
+class DirectedMatrixGraph(GraphInterface):
     '''
     Basic directed graph structure using a 2D matrix (nested lists) to store edges.
     Serves as the parent class for undirected, weighted, and acyclic graph variants.
@@ -249,7 +249,7 @@ class MatrixGraph(GraphInterface):
 
 
 
-class U_MatrixGraph(MatrixGraph):
+class UndirectedMatrixGraph(DirectedMatrixGraph):
     
     def _populate_matrix(self):
         '''
@@ -328,7 +328,7 @@ class U_MatrixGraph(MatrixGraph):
         return edges
 
 
-class W_MatrixGraph(MatrixGraph):
+class WeightedDirectedMatrixGraph(DirectedMatrixGraph):
     
     def __init__(self, vertices: list = None, edges: list[list[int]] | None = None, weights: dict = None) -> None:
         if vertices == None:
@@ -445,7 +445,7 @@ class W_MatrixGraph(MatrixGraph):
         self._check_weight(tuple_edge, self.matrix[edge[0]][edge[1]])
 
 
-class WU_MatrixGraph(W_MatrixGraph):
+class WeightedUndirectedMatrixGraph(WeightedDirectedMatrixGraph):
 
     def add_edge(self, v1, v2, weight):
         '''Adds a single directed edge to the graph: v1 -> v2. Both vertex args must either be an int

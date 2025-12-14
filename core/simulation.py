@@ -2,6 +2,7 @@ from cli.interface import Interface
 from cli.parser import Parser
 from utils.peopleIO import *
 from core.matrixGraph import *
+from core.listGraph import *
 import random
 import logging
 import math
@@ -101,7 +102,7 @@ class Simulation():
                             break
 
                     # Set weight using a half-normal distribution split then clamp, if weighted friend graph in use
-                    if type(self.graphs['friends']) == WU_MatrixGraph: 
+                    if type(self.graphs['friends']) == WeightedUndirectedMatrixGraph or type(self.graphs['friends']) == WeightedUndirectedListGraph: 
                         if random.random() < 0.85: # Higher == More likely to be friends. Lower == More likely to be enemies.
                             # FRIEND distribution
                             weight = random.gauss(1.7, 0.1)

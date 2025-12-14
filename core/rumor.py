@@ -1,4 +1,5 @@
 from core.matrixGraph import *
+from core.listGraph import *
 from core.graphInterface import GraphInterface
 from core.node import *
 import uuid
@@ -11,7 +12,11 @@ class Rumor():
         self.uid = uuid.uuid4()
         self.friend_graph = self.check_friend_graph(friend_graph)
 
-        rumor_graph = MatrixGraph(list(self.friend_graph.get_vertices()), None)
+        if type(friend_graph) == UndirectedMatrixGraph or type(friend_graph) == WeightedUndirectedMatrixGraph:
+            rumor_graph = DirectedMatrixGraph(list(self.friend_graph.get_vertices()), None)
+        elif type(friend_graph) == UndirectedListGraph or type(friend_graph) == WeightedUndirectedListGraph:
+            rumor_graph = DirectedListGraph(list(self.friend_graph.get_vertices()), None)
+
         self.graph = rumor_graph
 
         self.spreader = spreader
@@ -39,7 +44,7 @@ class Rumor():
 
 
     def check_trust_graph(self, graph):
-        if type(graph) != W_MatrixGraph:
+        if type(graph) != WeightedDirectedMatrixGraph and type(graph) != WeightedDirectedListGraph:
             raise TypeError(f"Rumor: Trust graph must be a Weighted Directed graph, got {type(graph)}.")
 
         if len(graph) < 1:
@@ -76,7 +81,7 @@ class Rumor():
                 break
 
             # Make rumors spread semi-randomly and more strongly through close friends by checking edge strength and introducing a new RNG bool variable
-            if type(self.friend_graph) == WU_MatrixGraph:
+            if type(self.friend_graph) == WeightedUndirectedMatrixGraph or type(self.friend_graph) == WeightedUndirectedListGraph:
                 selection_chance = (self.friend_graph.get_edge(spreader, friend) - 1) * 1.5 # subtract one to normalize value then increase by 50% to soften probabilistic curve
                 selected = random.random() < selection_chance
             else:

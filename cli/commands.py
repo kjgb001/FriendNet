@@ -1,4 +1,5 @@
 from core.matrixGraph import *
+from core.listGraph import *
 from core.rumor import *
 from utils.randomPeople import *
 from utils.peopleIO import *
@@ -114,7 +115,7 @@ def connect(interface, graphs, a, b, weight = None):
     b = _resolve_person(interface, b, interface.sim.present_name_index)
 
     # Check which type of graph is used for friends, then add edge
-    if isinstance(graphs["friends"], U_MatrixGraph):
+    if type(graphs["friends"]) == UndirectedMatrixGraph or type(graphs["friends"]) == UndirectedListGraph:
         graphs["friends"].add_edge(a, b)
         logger.info(f"{a} and {b} are now friends!")
 

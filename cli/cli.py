@@ -1,4 +1,5 @@
 from core.matrixGraph import *
+from core.listGraph import *
 from core.simulation import Simulation
 from .interface import Interface
 from .parser import Parser
@@ -20,23 +21,23 @@ def main():
     # Use args to set graph types
     graphs = build_graphs(args.rep, load_list)
 
-    # Call start here once profile generation and preloaded network setups are ready
+    # Start simulation with args
     populate = args.populate
     location = args.location
     sim = Simulation(graphs, interface, populate if populate else None, location)
     
+    # Pass simulation to interface and start the cli interface
     interface.sim = sim
     interface.run()
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Run FriendNet simulation")
-
-    # List based graphs not implemented yet, this does nothing
+    
     parser.add_argument(
         "--rep",
         choices=["matrix", "list"],
-        default="matrix",
+        default="list",
         help="Choose graph representation: matrix or list"
     )
 
@@ -67,23 +68,24 @@ def parse_arguments():
 
 
 def build_graphs(rep, load_list):
+
     graphs = {}
 
     if "weighted" in load_list:
         graphs["friends"] = (
-            WU_MatrixGraph() #if rep == "matrix"
+            WeightedUndirectedMatrixGraph() if rep == "matrix" else WeightedUndirectedListGraph()
         )
         graphs["trust"] = (
-            W_MatrixGraph() #if rep == "matrix"
+            WeightedDirectedMatrixGraph() if rep == "matrix" else WeightedDirectedListGraph()
         )
     elif "undirected" in load_list:
         graphs["friends"] = (
-            U_MatrixGraph() #if rep == "matrix"
+            UndirectedMatrixGraph() if rep == "matrix" else UndirectedListGraph()
         )
 
     if "directed" in load_list:
         graphs["gossip"] = (
-            MatrixGraph() #if rep =="matrix"
+            DirectedMatrixGraph() if rep =="matrix" else DirectedListGraph()
         )
 
     # Add DAG once implemented
