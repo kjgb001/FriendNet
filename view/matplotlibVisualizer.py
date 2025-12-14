@@ -10,6 +10,7 @@ import networkx as nx
 import math
 
 class MatplotlibVisualizer(VisualizerBase):
+    """Matplotlib/networkx based visualization layer"""
 
     def __init__(self, simulation):
         plt.ion() # interactive mode

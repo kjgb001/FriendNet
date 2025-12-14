@@ -4,6 +4,7 @@ from core.listGraph import *
 import networkx as nx
 
 class VisualizerBase(ABC):
+    """Foundation of visualization layer(s)"""
         
     @abstractmethod
     def redraw(self, simulation):
@@ -75,7 +76,8 @@ class VisualizerBase(ABC):
         
 
     def gen_nx_graphs(self, simulation, graph_to_gen, rumor):
-        if graph_to_gen == 0:
+        # Generate networkx graphs to be used in visualization
+        if graph_to_gen == 0: # 0 == friendship graph, 1 == gossip graph (requires an active rumor), else trust graph
             nx_graph = nx.Graph()
             self._add_vertices(simulation, nx_graph)
             self._friends_graph(simulation, nx_graph)

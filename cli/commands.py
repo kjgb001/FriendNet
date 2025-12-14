@@ -99,6 +99,7 @@ def remove_person(interface, graphs, name_str):
 
 
 def generate_people(interface, graphs, number, location = "generated_set"):
+    # Calls RandomUser.me API to generate x new people
     number = int(number)
     if number > 5000:
         raise ValueError(f"Too many people to generate. Number must be five thousand or less, got {number}")

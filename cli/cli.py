@@ -33,7 +33,7 @@ def main():
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Run FriendNet simulation")
-    
+
     parser.add_argument(
         "--rep",
         choices=["matrix", "list"],
@@ -68,7 +68,6 @@ def parse_arguments():
 
 
 def build_graphs(rep, load_list):
-
     graphs = {}
 
     if "weighted" in load_list:

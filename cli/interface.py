@@ -43,7 +43,8 @@ VIEW_COMMANDS = ["person", "kill", "reload", "connect", "disconnect",
                  "strengthen", "weaken", "spread", "view", "trust", "distrust"] # Which commands require a view redraw
 
 class Interface:
-    ''' CLI Interface '''
+    """Handler for CLI, command logic, and visualization."""
+
     def __init__(self, parser: Parser):
         self.parser = parser
         self.running = True
@@ -70,7 +71,7 @@ class Interface:
 
 
     def run(self):
-        ''' Starts the interactive cli. Calls parser then handles input while running. '''
+        # Starts the interactive cli. Calls parser then handles input while running.
         logger.info("\nWelcome to FriendNet! Please enter a command (type 'help' to see commands).\n")
         
         try:
@@ -85,9 +86,7 @@ class Interface:
 
 
     def handle(self, command, args = None):
-        ''' Check for command in the map. If present, retrieve value (method name in command.py)
-        and call it, passing the graphs and args.'''
-        
+        # Check for command in the map. If present, retrieve value (method name in command.py) and call it, passing the graphs and args.
         try:
             if command in self.commands:
                 func = COMMAND_MAP[command]
@@ -106,7 +105,9 @@ class Interface:
             else:
                 logger.info(f"Unknown command: {command}")
 
+            # Check if command should update the visualization
             if command in VIEW_COMMANDS and not self.suppress_view:
+                # Only try to pass current rumor if rumors exist
                 rumor = self.sim.rumors[-1] if len(self.sim.rumors) > 0 else None
                 self.view.redraw(self.sim, rumor)
 
@@ -116,10 +117,12 @@ class Interface:
 
 
     def suppress_output(self):
+        # Pauses logger printing to the terminal and prevents the visualization from drawing
         logger_mod.suppress_commands = True
         self.suppress_view = True
     
     def resume_output(self):
+        # Un-supress
         logger_mod.suppress_commands = False
         self.suppress_view = False
 

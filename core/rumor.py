@@ -6,9 +6,9 @@ import uuid
 import random
 
 class Rumor():
-
+    """Represents a single rumor instance and its propagation state."""
+    
     def __init__(self, friend_graph, spreader, target, rumor, trust = None):
-        ''' Rumor class to store rumor information, query stored information, propogate rumors, and trace their propogation. '''
         self.uid = uuid.uuid4()
         self.friend_graph = self.check_friend_graph(friend_graph)
 
@@ -54,7 +54,6 @@ class Rumor():
 
 
     def update_graphs(self, graph):
-        ''' Takes in a graph to replace the current friend graph, and adds vertices from this graph to the rumor graph if not present. ''' 
         self.friend_graph = self.check_friend_graph(graph)
         
         for i in range(len(graph)):
@@ -64,7 +63,7 @@ class Rumor():
 
 
     def spread_rumor(self, spreader = None):
-        ''' Recursive function that takes in the rumor info and spreads to connected vertices based on weights and RNG. '''
+        # Recursively propagate the rumor through the social graph.
         if not spreader:
             spreader = self.spreader
         
@@ -132,7 +131,7 @@ class Rumor():
 
 
     def summary(self):
-        '''Return a human-readable summary of the rumor and its propagation.'''
+        """Return a human-readable summary of the rumor and its propagation."""
         lines = [
             f"Rumor ID: {self.uid}",
             f"Spreader: {self.spreader}",
