@@ -11,8 +11,7 @@ import traceback
 logger = logging.getLogger(__name__)
 
 class Simulation():
-    """Builds network and stores state information"""
-
+    
     def __init__(self, graphs, interface, population_count, 
         people_location = "generated_set"): # create new args in cli.py
         self.graphs = graphs
@@ -155,7 +154,6 @@ class Simulation():
 
 
     def reload_all_people(self, file: str = None):
-        # Reloads people into the internal index of all people from specified file
         if not file:
             file = self.people_location
             
@@ -168,7 +166,6 @@ class Simulation():
 
 
     def update_present_names(self, person, action):
-        # Adds or removes a person from the internal index of present people
         if action.lower() == "add":
             self.present_name_index[
                 (person.data.fname.lower(), person.data.lname.lower())

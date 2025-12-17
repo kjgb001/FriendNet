@@ -1,14 +1,20 @@
 import uuid
 
-class Node:
+class Vertex:
+    """! The node.Vertex class.
+
+    Defines the basic vertex class, stores data and edges for graph structure.
+    """
     def __init__(self, data = None, edges = None) -> None:
         self.data = data
         self.edges = edges
 
 
 class Identity:
-    """Encapsulates identifying attributes for a person."""
-    
+    """! The node.Identity class.
+
+    Defines the Identity class, stores identifying information used by Person class
+    """
     def __init__(self, fname, lname, gender, picture) -> None:
         self.fname = fname
         self.lname = lname
@@ -17,11 +23,14 @@ class Identity:
         self.uid = uuid.uuid4()
 
 
-class Person(Node):
-    """Graph node representing a person in the simulation."""
+class Person(Vertex):
+    """! The node.Person class.
 
+    Inherits from Vertex class, adding an identity parameter.
+    """
     def __init__(self, identity: Identity, edges: list = None) -> None:
         super().__init__(identity, edges)
+        # TODO: implement a friend list here
 
     def __eq__(self, other):
         return (
