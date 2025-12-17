@@ -2,9 +2,7 @@
 
 **A social simulation for learning graph theory built in Python.**
 
-FriendNet turns classic graph structures into an interactive world where friendships and rumors play out as live data structures.  
-
-*Note: This project is incomplete. Live simulation logic is not currently implemented.
+FriendNet turns classic graph structures into an interactive command-line world where friendships, rumors, and quests play out as live data structures.  
 
 ---
 
@@ -15,14 +13,15 @@ FriendNet is a progressive lab series that teaches students how different graph 
 Each lab builds on the last:
 1. **Directed Graph** — Gossip and one sided relationships
 2. **Undirected Graph** — Friendship web
-3. **Weighted Graphs** — Trust and relationship strength
+3. **Weighted Graph** — Trust and relationship strength
+4. **DAG (Directed Acyclic Graph)** — Quest dependencies
 
 The simulation responds in real time to CLI commands like:  
 connect Alice Bob
 spread_rumor Alice
-strengthen Alice Bob 1
-
-(CLI is primitive and will be superceded by a GUI that calls commands via the interface)
+strengthen Alice Bob 5
+shortest_path Alice Carol
+quests_available
 
 A visualization window dynamically updates the social network as gossip spreads and relationships form, strengthen, or decay.
 
@@ -31,6 +30,7 @@ A visualization window dynamically updates the social network as gossip spreads 
 ## Pedagogical Goals
 
 - Reinforce understanding of **graph theory** through direct implementation.  
+- Build student comfort with **command-line interaction**.  
 - Connect abstract data structures to real-world systems.  
 - Encourage experimentation and debugging intuition through live feedback.
 
@@ -39,8 +39,12 @@ A visualization window dynamically updates the social network as gossip spreads 
 ## Technical Stack
 
 - **Python 3.11+**
+- **pytest** — internal testing & autograding  
 - **unittest** — student testing  
-- **networkx + matplotlib** — visualization  
+- **networkx + matplotlib** — visualization MVP  
+- **pygame** *(optional)* — advanced visualization  
+- **rich** — colored CLI text  
+- **mypy** — static type checking  
 - **logging** — event tracking  
 - **argparse/cmd** — command parsing
 
@@ -66,11 +70,15 @@ pytest
 
 ## Developer Notes
 
-- Visualization modules are pluggable — you can swap MatplotlibVisualizer for a new visualizer.
+- The project is fully type-hinted (mypy compatible).
+
+- Visualization modules are pluggable — you can swap MatplotlibVisualizer for PygameVisualizer.
+
+- pytest is used internally for autograding, but students write their own tests with unittest.
 
 - Logging replaces all print statements for professional debugging.
 
-- The FriendNet/student subdirectory is the student facing version, ready for use in the classroom.
+- The FriendNet/FriendNet_student subdirectory is the student facing version, ready for use in the classroom.
 
 # License
 
@@ -81,4 +89,4 @@ See [License](LICENSE) for details.
 
 Designed as a TA project and pedagogical tool for the **CSCI 204: Data Structures** course at **Bucknell University** under the guidance of the Computer Science Department.
 
-FriendNet is intended as an open educational tool for teaching graph theory, data structures, and experimental simulation design.
+FriendNet is intended as an open educational tool for teaching graph theory, data structures, and simulation design.
