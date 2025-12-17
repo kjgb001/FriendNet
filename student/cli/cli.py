@@ -11,7 +11,7 @@ def main():
 
     # Turn load string into list
     if args.load == "all":
-        load_list = ["undirected", "directed", "weighted"]
+        load_list = ["undirected", "directed", "weighted", "dag"]
     else:
         load_list = args.load.split(",")
 
