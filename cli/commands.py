@@ -4,8 +4,7 @@ from core.rumor import *
 from utils.randomPeople import *
 from utils.peopleIO import *
 from math import log
-from numpy import random
-from numpy import clip
+import random
 import logging
 
 logger = logging.getLogger(__name__)
@@ -105,7 +104,7 @@ def generate_people(interface, graphs, number, location = "generated_set"):
     new_people = build_set(number, location)
     save_people(f"assets/people/{location}.json", new_people)
 
-    interface.sim.all_people.append(new_people)
+    interface.sim.all_people.extend(new_people)
 
     logger.info(f"{number} people successfully generated!")
 
@@ -278,12 +277,12 @@ def _set_trust(interface, graphs, a, b, weight):
 
     # Apply slight randomness, restrain max/min. and add to graph
     trust_noisy_a = trust_raw + random.uniform(-e, e)
-    trust = clip(trust_noisy_a, 1.05, 1.95)
+    trust = min(max(trust_noisy_a, 1.05), 1.95)
     graphs["trust"].add_edge(a, b, trust)
 
     # Mirror last step for other direction
     trust_noisy_b = trust_raw + random.uniform(-e, e)
-    trust = clip(trust_noisy_b, 1.05, 1.95)
+    trust = min(max(trust_noisy_b, 1.05), 1.95)
     graphs["trust"].add_edge(b, a, trust)
 
     logger.info(f"{a} trust for {b} = " + str(graphs["trust"].get_edge(a,b)))
@@ -301,6 +300,19 @@ def spread_rumor(interface, graphs, spreader, target, rumor: str):
     logger.info(str(rumor.summary()) + "\n")
 
     return rumor
+
+
+def start_sim(sim):
+    logger.info("Simulation started!\n")
+    sim.start_sim()
+
+def stop_sim(sim):
+    sim.stop_sim()
+    logger.info("Simulation stopped!\n")
+
+def sim_tick(sim):
+    sim.tick()
+    logger.info("Simulation stepped forward by one tick!\n")
 
 
 def print_rumors(rumors):

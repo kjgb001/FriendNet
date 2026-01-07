@@ -2,6 +2,11 @@
 
 from cli.cli import main
 from utils.logger import setup_logging
+'''
+import faulthandler
+faulthandler.enable(all_threads=True)
+# DEBUG
+'''
 
 setup_logging()
 

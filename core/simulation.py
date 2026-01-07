@@ -7,6 +7,8 @@ import random
 import logging
 import math
 import traceback
+import threading
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +17,19 @@ class Simulation():
     def __init__(self, graphs, interface, population_count, 
         people_location = "generated_set"): # create new args in cli.py
         self.graphs = graphs
+        self.weighted_graphs = None
         self.interface = interface
         self.parser = Parser()
         self.rumors = []
         self.count = 0
+
+        if type(self.graphs["friends"]) == WeightedUndirectedListGraph or type(self.graphs["friends"]) == WeightedUndirectedMatrixGraph:
+            self.weighted_graphs = True
+
+        # Control sim loop
+        self.running = False
+        self.tick_interval = 1.0
+        self.sim_thread = None
 
         # Store all people and association indices here
         self.all_people = load_people(f"assets/people/{people_location}.json")
@@ -49,6 +60,22 @@ class Simulation():
         self.interface.view_init(self)
 
     
+    def _set_new_connection_weight(self):
+        # Set weight using a half-normal distribution split then clamp, if weighted friend graph in use
+        if self.weighted_graphs:
+            if random.random() < 0.85: # Higher == More likely to be friends. Lower == More likely to be enemies.
+                # FRIEND distribution
+                weight = random.gauss(1.7, 0.1)
+            else:
+                # ENEMY distribution
+                weight = random.gauss(1.3, 0.1)
+        
+            weight = max(1.0, min(weight, 2.0))
+        else:
+            weight = None
+        return weight
+
+
     def build_network(self, file = "generated_set"):
         ''' 
         Randomly collects [count] people from specified file in assets/people directory, 
@@ -101,18 +128,7 @@ class Simulation():
                         if friend != person:
                             break
 
-                    # Set weight using a half-normal distribution split then clamp, if weighted friend graph in use
-                    if type(self.graphs['friends']) == WeightedUndirectedMatrixGraph or type(self.graphs['friends']) == WeightedUndirectedListGraph: 
-                        if random.random() < 0.85: # Higher == More likely to be friends. Lower == More likely to be enemies.
-                            # FRIEND distribution
-                            weight = random.gauss(1.7, 0.1)
-                        else:
-                            # ENEMY distribution
-                            weight = random.gauss(1.3, 0.1)
-
-                        weight = max(1.0, min(weight, 2.0))
-                    else:
-                        weight = None
+                    weight = self._set_new_connection_weight()
 
                     # Make connection via interface command
                     self.interface.handle("connect", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
@@ -126,7 +142,7 @@ class Simulation():
 
         except Exception as e:
             logger.info(f"[Error] Simulation failed to generate network (either partially or fully), due to: {e}")
-            traceback.print_exc() # DEBUG
+            #traceback.print_exc() # DEBUG
 
 
     def pick_connection(self, person, picked, friend_graph, seed_people):
@@ -151,6 +167,159 @@ class Simulation():
 
         # fallback: sparse cross-clique links
         return random.choice([p for p in picked if p != person])
+
+
+    def start_sim(self):
+        if self.running:
+            return
+
+        self.running = True
+        self.sim_thread = threading.Thread(
+            target=self._run_loop,
+            daemon=True
+        )
+        self.interface.suppress_output()
+        self.sim_thread.start()
+
+    def stop_sim(self):
+        self.running = False
+        self.interface.resume_output()
+
+    def _run_loop(self):
+        while self.running:
+            self.tick()
+            time.sleep(self.tick_interval)
+
+    def _log_bias(self, x, k=4):
+        """
+        x in [0, 1] → returns log-biased value in [0, 1]
+        """
+        return math.log(1 + k * x) / math.log(1 + k)
+
+        
+    def tick(self):
+        # Mutation is chosen by a random int from these two lists
+        unweighted = [0, 1]
+        weighted   = [2, 3] if self.weighted_graphs else []
+        options = unweighted + weighted
+
+        mutation_weights_map = {
+            0: 3, # Add connection
+            1: 1, # Remove connection
+            2: 5, # Strengthen connection
+            3: 4, # Weaken connection
+        }
+        mutation_weights = [mutation_weights_map[o] for o in options]
+        mutation_choice = random.choices(options, weights=mutation_weights, k=1)[0]
+
+        # Choose random person to mutate state
+        present_people = [p for p in self.graphs["friends"].get_vertices() if p]
+        if not present_people:
+            return
+        person = random.choice(present_people)
+
+        match mutation_choice:
+            case 0: # Add connection (Biased towards mutuals)
+                # print("attempting connection") # DEBUG
+                neighbors = set(self.graphs["friends"].get_neighbors(person))
+                if not neighbors:
+                    return
+
+                # Triadic candidates: friends-of-friends not already connected
+                triadic = set()
+                for n in neighbors:
+                    triadic.update(self.graphs["friends"].get_neighbors(n))
+
+                triadic.discard(person)
+                triadic -= neighbors
+
+                # 80% triadic, 20% random fallback
+                if triadic and random.random() < 0.8:
+                    target = random.choice(list(triadic))
+                else:
+                    candidates = [p for p in present_people if p != person and p not in neighbors]
+                    if not candidates:
+                        return
+                    target = random.choice(candidates)
+
+                weight = self._set_new_connection_weight()
+
+                self.interface.handle("connect", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
+                        f"{target.data.fname.lower()} {target.data.lname.lower()}", weight])
+                # print("New conncetion Successful!") # DEBUG
+
+            case 1: # Remove connection (Closer to neutral == more likely to be pruned)
+                # print("attempting disconnection") # DEBUG
+                neighbors = self.graphs["friends"].get_neighbors(person)
+                if not neighbors or len(neighbors) <= 1:
+                    return
+
+                # Weight closeness to neutral → removal likelihood
+                scored = []
+                for n in neighbors:
+                    w = self.graphs["friends"].get_edge(person, n)
+                    if w is None:
+                        continue
+                    closeness = 1 - abs(w - 1.5) / 0.5  # 1.0 at neutral, 0.0 at extremes
+                    score = self._log_bias(max(0, closeness))
+                    scored.append((score, n))
+
+                if not scored:
+                    return
+
+                _, target = max(scored, key=lambda x: x[0])
+
+                self.interface.handle("disconnect", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
+                        f"{target.data.fname.lower()} {target.data.lname.lower()}"])
+                # print("disconnection succesful") # DEBUG
+
+            case 2: # Strengthen connection (log curve rng)
+                # print("attempting strengthen") # DEBUG
+                neighbors = self.graphs["friends"].get_neighbors(person)
+                if not neighbors:
+                    return
+
+                scored = []
+                for n in neighbors:
+                    w = self.graphs["friends"].get_edge(person, n)
+                    if w is None or w >= 2.0:
+                        continue
+                    strength = (w - 1.5) / 0.5  # [-1, +1]
+                    bias = self._log_bias(max(0, strength))
+                    scored.append((bias, n))
+
+                if not scored:
+                    return
+
+                _, target = max(scored, key=lambda x: x[0])
+
+                self.interface.handle("strengthen", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
+                        f"{target.data.fname.lower()} {target.data.lname.lower()}", 0.05])
+                # print("strengthen successful") # DEBUG
+
+            case 3: # Weaken connection (log curve rng)
+                # print("attempting weaken") # DEBUG
+                neighbors = self.graphs["friends"].get_neighbors(person)
+                if not neighbors:
+                    return
+
+                scored = []
+                for n in neighbors:
+                    w = self.graphs["friends"].get_edge(person, n)
+                    if w is None or w <= 1.0:
+                        continue
+                    weakness = (1.5 - w) / 0.5  # [0, 1]
+                    bias = self._log_bias(max(0, weakness))
+                    scored.append((bias, n))
+
+                if not scored:
+                    return
+
+                _, target = max(scored, key=lambda x: x[0])
+
+                self.interface.handle("weaken", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
+                        f"{target.data.fname.lower()} {target.data.lname.lower()}", 0.05])
+                # print("weaken successful") # DEBUG
 
 
     def reload_all_people(self, file: str = None):

@@ -16,15 +16,22 @@ class MatplotlibVisualizer(VisualizerBase):
         self.fig, self.ax = plt.subplots()
         self.positions = {} # node positions
         self.page = 0 # Which graph to display when redraw is called
+        self.sim = simulation
         
         self.portrait_zoom = 0.3 # adjust as needed
         self.image_cache = {
             person: OffsetImage(mpimg.imread(path), zoom = self.portrait_zoom)
-            for person, path in simulation.image_map.items()}
+            for person, path in self.sim.image_map.items()}
 
         def _on_close(event):
-            import sys
-            sys.exit(0)
+            # Tell the app to stop
+            self.sim.interface.shutdown()
+            # Stop sim loop if it's running
+            try:
+                self.sim.stop_sim()
+            except Exception:
+                pass
+
         self.fig.canvas.mpl_connect("close_event", _on_close)
 
         manager = plt.get_current_fig_manager()
@@ -34,17 +41,17 @@ class MatplotlibVisualizer(VisualizerBase):
         window.setWindowFlag(QtCore.Qt.WindowDoesNotAcceptFocus, True)
 
         window.show()
-        self.redraw(simulation)
+        self.redraw(self.sim)
 
     def close(self):
         plt.close(self.fig)
         
 
-    def redraw(self, simulation, rumor = None):
+    def redraw(self, rumor = None):
         # Get graph in networkx form, and determine if rumor should be passed as is
         if self.page != 1:
             rumor = None
-        nx_graph = self.gen_nx_graphs(simulation, self.page, rumor)
+        nx_graph = self.gen_nx_graphs(self.sim, self.page, rumor)
         
         # Update positions only if they don't exist or node count changes
         if self.positions is None or len(self.positions) != nx_graph.number_of_nodes():
@@ -60,10 +67,10 @@ class MatplotlibVisualizer(VisualizerBase):
                 elif w > 1.55:
                     layout_graph.add_edge(u, v, weight = w - 1.0)
 
-            scale = 2 + math.log(simulation.count) # Area grows with log(n)
+            scale = 2 + math.log(self.sim.count) # Area grows with log(n)
             # Compute the theoretical FR optimal edge length
             area = (2 * scale) ** 2
-            k = 0.75 * math.sqrt(area / simulation.count)
+            k = 0.75 * math.sqrt(area / self.sim.count)
             # Increase k by a factor proportional to the portrait radius
             portrait_radius = 64 * self.portrait_zoom # change first number if size of images changes
             k *= 1 + (portrait_radius / 40) # denominator can be adjusted
@@ -126,6 +133,11 @@ class MatplotlibVisualizer(VisualizerBase):
         self.fig.canvas.flush_events()
         plt.pause(0.001)
 
+
+    def pump_events(self, interval=0.01):
+        import threading
+        assert threading.current_thread() is threading.main_thread()
+        plt.pause(interval)
 
     def draw_node_images(self, ax, positions):
         for person, (x,y) in self.positions.items():

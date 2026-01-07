@@ -4,6 +4,10 @@ from view.matplotlibVisualizer import MatplotlibVisualizer
 
 import logging
 import traceback
+import threading
+import time
+import sys
+import select
 import utils.logger as logger_mod
 
 
@@ -30,7 +34,11 @@ COMMAND_MAP = {
     "spread": spread_rumor,
     "rumors": print_rumors,
 
-    "view": change_view
+    "view": change_view,
+
+    "start": start_sim,
+    "stop": stop_sim,
+    "tick": sim_tick
     
     # add more commands
 }
@@ -50,9 +58,12 @@ class Interface:
         self.sim = None
         self.view = None
         self.suppress_view = False
+        self.command_lock = threading.RLock()
+        self.redraw_pending = False
+        self.prompt_shown = False
 
         self.commands = {"help", "people", "person", "kill", "generate", 
-                        "reload", "view", "rumors"}
+                        "reload", "view", "rumors", "start", "stop", "tick"}
         
 
     def view_init(self, simulation):
@@ -73,46 +84,110 @@ class Interface:
         ''' Starts the interactive cli. Calls parser then handles input while running. '''
         logger.info("\nWelcome to FriendNet! Please enter a command (type 'help' to see commands).\n")
         
+        def input_loop():
+            while self.running:
+                # Show prompt once per input cycle
+                if not self.prompt_shown:
+                    print("> ", end="", flush=True)
+                    self.prompt_shown = True
+
+                ready, _, _ = select.select([sys.stdin], [], [], 0.1)
+
+                if ready:
+                    line = sys.stdin.readline()
+                    if not line:
+                        break  # EOF
+
+                    self.prompt_shown = False  # reset for next command
+                    command, args = self.parser.parse(line)
+                    self.handle(command, args)
+
+        # Start input thread
+        threading.Thread(target=input_loop, daemon=True).start()
+
+        # MAIN THREAD: redraw pump
         try:
             while self.running:
-                raw = input("> ")
-                command, args = self.parser.parse(raw)
-                self.handle(command, args)
+                if self.redraw_pending:
+                    rumor = self.sim.rumors[-1] if self.sim.rumors else None
+                    self.view.redraw(rumor)
+                    self.redraw_pending = False
+
+                self.view.pump_events(0.01)
+
         except KeyboardInterrupt:
-            logger.info("Shutting down FriendNet...")
+            logger.info("Shutting down FriendNet...\n")
+            self.running = False
             self.view.close()
-            raise
 
 
-    def handle(self, command, args = None):
-        ''' Check for command in the map. If present, retrieve value (method name in command.py)
-        and call it, passing the graphs and args.'''
-        
+    def shutdown(self):
+        if not self.running:
+            return
+
+        logger.info("Visualization closed. Shutting down FriendNet...\n")
+        self.running = False
+
+        # Stop simulation thread if running
+        if self.sim:
+            self.sim.stop_sim()
+
+        # Close view defensively
         try:
-            if command in self.commands:
+            self.view.close()
+        except Exception:
+            pass
+
+        # Exit input thread
+        try:
+            sys.stdin.close()
+        except Exception:
+            pass
+
+
+    def handle(self, command, args=None):
+        """
+        Execute a command that mutates simulation state.
+        This method is thread-safe and NEVER performs UI redraws.
+        """
+        try:
+            with self.command_lock:
+                if command not in self.commands:
+                    logger.info(f"Unknown command: {command}")
+                    return
+
                 func = COMMAND_MAP[command]
-                if command == "help":
-                    func(self.sim.graphs, self.commands, *args)
+
+                # Command dispatch
+                if command in ("start", "stop", "tick"):
+                    func(self.sim)
+
+                elif command == "help":
+                    func(self.sim.graphs, self.commands, *(args or []))
+
                 elif command == "people":
                     func(self.sim.graphs)
+
                 elif command == "spread":
-                    self.sim.rumors.append(func(self, self.sim.graphs, *args))
+                    rumor = func(self, self.sim.graphs, *(args or []))
+                    self.sim.rumors.append(rumor)
+
                 elif command == "rumors":
                     func(self.sim.rumors)
+
                 elif command == "reload":
                     func(self)
-                else:
-                    func(self, self.sim.graphs, *args)
-            else:
-                logger.info(f"Unknown command: {command}")
 
-            if command in VIEW_COMMANDS and not self.suppress_view:
-                rumor = self.sim.rumors[-1] if len(self.sim.rumors) > 0 else None
-                self.view.redraw(self.sim, rumor)
+                else:
+                    func(self, self.sim.graphs, *(args or []))
+
+                # Signal redraw if this command affects the view
+                if command in VIEW_COMMANDS:
+                    self.redraw_pending = True
 
         except Exception as e:
             logger.info(f"[Error] {e}")
-            traceback.print_exc() # DEBUG
+            traceback.print_exc()  # DEBUG
 
 
     def suppress_output(self):
