@@ -10,12 +10,14 @@ import traceback
 import threading
 import time
 
+from PySide6.QtCore import QObject, QTimer, Slot
+
 logger = logging.getLogger(__name__)
 
-class Simulation():
-    
+class Simulation(QObject):
     def __init__(self, graphs, interface, population_count, 
         people_location = "generated_set"): # create new args in cli.py
+        super().__init__()
         self.graphs = graphs
         self.weighted_graphs = None
         self.interface = interface
@@ -26,10 +28,11 @@ class Simulation():
         if type(self.graphs["friends"]) == WeightedUndirectedListGraph or type(self.graphs["friends"]) == WeightedUndirectedMatrixGraph:
             self.weighted_graphs = True
 
-        # Control sim loop
-        self.running = False
-        self.tick_interval = 1.0
-        self.sim_thread = None
+        # Control sim loop (Qt-driven)
+        self.tick_interval = 0.5 # Tick speed default in seconds
+        self.timer = QTimer(self)
+        self.timer.setInterval(int(self.tick_interval * 1000))
+        self.timer.timeout.connect(self._on_tick)
 
         # Store all people and association indices here
         self.all_people = load_people(f"assets/people/{people_location}.json")
@@ -137,12 +140,13 @@ class Simulation():
 
                 logger.debug(f"{person} number of connections: {len(friends)}")
 
-            self.interface.resume_output()
-            logger.info("\nNetwork build successful!")
-
         except Exception as e:
             logger.info(f"[Error] Simulation failed to generate network (either partially or fully), due to: {e}")
             #traceback.print_exc() # DEBUG
+
+        finally:
+            self.interface.resume_output()
+            logger.info("\nNetwork build successful!")
 
 
     def pick_connection(self, person, picked, friend_graph, seed_people):
@@ -169,35 +173,49 @@ class Simulation():
         return random.choice([p for p in picked if p != person])
 
 
-    def start_sim(self):
-        if self.running:
+    def start(self):
+        if self.timer.isActive():
             return
-
-        self.running = True
-        self.sim_thread = threading.Thread(
-            target=self._run_loop,
-            daemon=True
-        )
         self.interface.suppress_output()
-        self.sim_thread.start()
+        self.timer.start()
 
-    def stop_sim(self):
-        self.running = False
+    def stop(self):
+        self.timer.stop()
         self.interface.resume_output()
 
-    def _run_loop(self):
-        while self.running:
-            self.tick()
-            time.sleep(self.tick_interval)
+    def step_once(self):
+        was_active = False
+        if self.timer.isActive():
+            self.timer.stop()
+            self.interface.resume_output()
+            was_active = True
+
+        self.tick()
+
+        return was_active
+
+    @Slot()
+    def _on_tick(self):
+        self.tick()
+
+    def set_tick_interval(self, interval: float):
+        """Set sim loop interval in seconds"""
+        self.tick_interval = interval
+        was_running = self.timer.isActive()
+        self.timer.stop()
+        self.timer.setInterval(int(interval * 1000)) # Convert to (int) ms for Qt and set
+        if was_running:
+            self.timer.start()
+
 
     def _log_bias(self, x, k=4):
         """
         x in [0, 1] → returns log-biased value in [0, 1]
         """
         return math.log(1 + k * x) / math.log(1 + k)
-
         
     def tick(self):
+        # print("TICK") #DEBUG
         # Mutation is chosen by a random int from these two lists
         unweighted = [0, 1]
         weighted   = [2, 3] if self.weighted_graphs else []

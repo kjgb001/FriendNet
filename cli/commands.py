@@ -304,14 +304,16 @@ def spread_rumor(interface, graphs, spreader, target, rumor: str):
 
 def start_sim(sim):
     logger.info("Simulation started!\n")
-    sim.start_sim()
+    sim.start()
 
 def stop_sim(sim):
-    sim.stop_sim()
+    sim.stop()
     logger.info("Simulation stopped!\n")
 
 def sim_tick(sim):
-    sim.tick()
+    timer_active = sim.step_once()
+    if timer_active:
+        logger.info("Simulation paused.")
     logger.info("Simulation stepped forward by one tick!\n")
 
 

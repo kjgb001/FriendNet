@@ -4,12 +4,13 @@ from view.matplotlibVisualizer import MatplotlibVisualizer
 
 import logging
 import traceback
-import threading
 import time
 import sys
 import select
+import threading
 import utils.logger as logger_mod
 
+from PySide6.QtCore import QObject, Signal, Slot
 
 logger = logging.getLogger(__name__)
 
@@ -50,20 +51,25 @@ WEIGHTED_COMMANDS = ["strengthen", "weaken", "trust", "distrust"]
 VIEW_COMMANDS = ["person", "kill", "reload", "connect", "disconnect",
                  "strengthen", "weaken", "spread", "view", "trust", "distrust"] # Which commands require a view redraw
 
-class Interface:
+class Interface(QObject):
     ''' CLI Interface '''
+
+    command_requested = Signal(str, object)
+
     def __init__(self, parser: Parser):
+        super().__init__()
         self.parser = parser
         self.running = True
         self.sim = None
         self.view = None
         self.suppress_view = False
-        self.command_lock = threading.RLock()
         self.redraw_pending = False
         self.prompt_shown = False
 
         self.commands = {"help", "people", "person", "kill", "generate", 
                         "reload", "view", "rumors", "start", "stop", "tick"}
+
+        self.command_requested.connect(self._handle_on_main_thread)
         
 
     def view_init(self, simulation):
@@ -98,9 +104,9 @@ class Interface:
                     if not line:
                         break  # EOF
 
-                    self.prompt_shown = False  # reset for next command
                     command, args = self.parser.parse(line)
-                    self.handle(command, args)
+                    #print("EMITTING COMMAND") # DEBUG
+                    self.command_requested.emit(command, args)
 
         # Start input thread
         threading.Thread(target=input_loop, daemon=True).start()
@@ -130,7 +136,7 @@ class Interface:
 
         # Stop simulation thread if running
         if self.sim:
-            self.sim.stop_sim()
+            self.sim.stop()
 
         # Close view defensively
         try:
@@ -145,49 +151,57 @@ class Interface:
             pass
 
 
-    def handle(self, command, args=None):
+    @Slot(str, object)
+    def _handle_on_main_thread(self, command, args):
+        #print("RECEIVED COMMAND") # DEBUG
+        self.handle(command, args, source="cli")
+
+    def handle(self, command, args=None, source="sim"):
         """
         Execute a command that mutates simulation state.
-        This method is thread-safe and NEVER performs UI redraws.
         """
+        #print(f"[DEBUG] suppress={logger_mod.suppress_commands}, cmd={command}") # DEBUG
         try:
-            with self.command_lock:
-                if command not in self.commands:
-                    logger.info(f"Unknown command: {command}")
-                    return
+            if command not in self.commands:
+                logger.info(f"Unknown command: {command}")
+                return
 
-                func = COMMAND_MAP[command]
+            func = COMMAND_MAP[command]
 
-                # Command dispatch
-                if command in ("start", "stop", "tick"):
-                    func(self.sim)
+            # Command dispatch
+            if command in ("start", "stop", "tick"):
+                func(self.sim)
 
-                elif command == "help":
-                    func(self.sim.graphs, self.commands, *(args or []))
+            elif command == "help":
+                func(self.sim.graphs, self.commands, *(args or []))
 
-                elif command == "people":
-                    func(self.sim.graphs)
+            elif command == "people":
+                func(self.sim.graphs)
 
-                elif command == "spread":
-                    rumor = func(self, self.sim.graphs, *(args or []))
-                    self.sim.rumors.append(rumor)
+            elif command == "spread":
+                rumor = func(self, self.sim.graphs, *(args or []))
+                self.sim.rumors.append(rumor)
 
-                elif command == "rumors":
-                    func(self.sim.rumors)
+            elif command == "rumors":
+                func(self.sim.rumors)
 
-                elif command == "reload":
-                    func(self)
+            elif command == "reload":
+                func(self)
 
-                else:
-                    func(self, self.sim.graphs, *(args or []))
+            else:
+                func(self, self.sim.graphs, *(args or []))
 
-                # Signal redraw if this command affects the view
-                if command in VIEW_COMMANDS:
-                    self.redraw_pending = True
+            # Signal redraw if this command affects the view
+            if command in VIEW_COMMANDS:
+                self.redraw_pending = True
 
         except Exception as e:
             logger.info(f"[Error] {e}")
             traceback.print_exc()  # DEBUG
+        
+        finally:
+            if source == "cli":
+                self.prompt_shown = False
 
 
     def suppress_output(self):
