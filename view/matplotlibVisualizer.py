@@ -2,6 +2,7 @@ from .visualizerBase import VisualizerBase
 import os
 os.environ["QT_LOGGING_RULES"] = "*.debug=false;*.warning=false" # Force Qt to stop whining about not getting window focus
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from matplotlib.patches import FancyArrowPatch
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib import transforms
@@ -9,6 +10,7 @@ from PySide6 import QtCore
 from PySide6.QtCore import QTimer
 import networkx as nx
 import math
+import time
 
 class MatplotlibVisualizer(VisualizerBase):
 
@@ -18,7 +20,11 @@ class MatplotlibVisualizer(VisualizerBase):
         self.positions = {} # node positions
         self.page = 0 # Which graph to display when redraw is called
         self.sim = simulation
+        self.rumor = None
+
         self.highlighted_node = None   # Person or None
+        self._last_hover_redraw = 0
+        self._hover_redraw_interval = 0.05  # 50 ms = 20 FPS
 
         # Qt timer for clearing hover events. Solution to stubborn missed motion events bug.
         self._hover_clear_timer = QTimer()
@@ -26,6 +32,7 @@ class MatplotlibVisualizer(VisualizerBase):
         self._hover_clear_timer.timeout.connect(self._clear_hover_timeout)
         
         self.portrait_zoom = 0.3 # adjust as needed
+        self.portrait_radius, self.arrow_margin = self._calculate_radii(self.portrait_zoom)
         self.image_cache = {
             person: mpimg.imread(path)
             for person, path in self.sim.image_map.items()
@@ -50,7 +57,7 @@ class MatplotlibVisualizer(VisualizerBase):
         window.setWindowFlag(QtCore.Qt.WindowDoesNotAcceptFocus, True)
 
         window.show()
-        self.redraw(self.sim)
+        self.redraw()
 
     def close(self):
         plt.close(self.fig)
@@ -59,12 +66,24 @@ class MatplotlibVisualizer(VisualizerBase):
         import threading
         assert threading.current_thread() is threading.main_thread()
         plt.pause(interval)
-        
+
+    def _calculate_radii(self, portrait_zoom):
+        portrait_radius = 64 * portrait_zoom # change first number if size of images changes
+        portrait_pts = portrait_radius * 72 / self.fig.dpi
+        arrow_margin = portrait_pts + 10 # set to arrow mutation scale
+
+        return portrait_radius, arrow_margin
+
 
     def redraw(self, rumor = None):
         # Get graph in networkx form, and determine if rumor should be passed as is
         if self.page != 1:
             rumor = None
+        else:
+            if not self.rumor:
+                self.rumor = self.sim.rumors[-1] # set to latest rumor if none already set
+            rumor = self.rumor
+
         nx_graph = self.gen_nx_graphs(self.sim, self.page, rumor)
         
         # Update positions only if they don't exist or node count changes
@@ -86,14 +105,25 @@ class MatplotlibVisualizer(VisualizerBase):
             area = (2 * scale) ** 2
             k = 0.75 * math.sqrt(area / self.sim.count)
             # Increase k by a factor proportional to the portrait radius
-            portrait_radius = 64 * self.portrait_zoom # change first number if size of images changes
-            k *= 1 + (portrait_radius / 40) # denominator can be adjusted
+            k *= 1 + (self.portrait_radius / 40) # denominator can be adjusted
 
             self.positions = nx.spring_layout(layout_graph, weight="weight", k=k, # increases desired inter-node distance
                                             iterations=300, scale=scale) # spreads clusters outward
 
         # Clear the visualization for redraw
         self.ax.clear()
+
+        # Set scaling explicitly
+        xs = [x for x, y in self.positions.values()]
+        ys = [y for x, y in self.positions.values()]
+
+        pad = 0.5  # tweak for breathing room
+
+        self.ax.set_xlim(min(xs) - pad, max(xs) + pad)
+        self.ax.set_ylim(min(ys) - pad, max(ys) + pad)
+
+        self.ax.set_aspect("equal", adjustable="box")
+        self.ax.axis("off")
 
         # Highlight visibility logic
         highlight = self.highlighted_node
@@ -128,7 +158,7 @@ class MatplotlibVisualizer(VisualizerBase):
             # Dim edges not connected to highlighted node
             if visible_nodes is not None:
                 if u in visible_nodes and v in visible_nodes:
-                    alpha = 1.0
+                    alpha = 1.0 if self.page == 0 or u == self.highlighted_node else 0.1 # If directed edges only highlight outgoing edges 
                 else:
                     alpha = 0.1
             else:
@@ -148,13 +178,43 @@ class MatplotlibVisualizer(VisualizerBase):
         for (u, v), color, width, alpha in zip(nx_graph.edges(), colors, widths, alphas):
             x = [self.positions[u][0], self.positions[v][0]]
             y = [self.positions[u][1], self.positions[v][1]]
-            self.ax.plot(
-                x, y,
-                color=color,
-                linewidth=width,
-                alpha=alpha,
-                zorder=1
-            )
+
+            linestyle = None
+            if self.page == 1:
+                color = "black"
+            if self.page == 2:
+                linestyle = "--"
+            else:
+                linestlye = "-"
+
+            if self.page == 0:
+                self.ax.plot(
+                    x, y,
+                    color=color,
+                    linewidth=width,
+                    alpha=alpha,
+                    zorder=1,
+                    linestyle=linestyle
+                )
+            else:
+                x1, y1 = self.positions[u]
+                x2, y2 = self.positions[v]
+
+                arrow = FancyArrowPatch(
+                    (x1, y1),
+                    (x2, y2),
+                    arrowstyle='->',
+                    linewidth=width,
+                    linestyle=linestyle,
+                    color=color,
+                    alpha=alpha,
+                    mutation_scale=10,
+                    shrinkA=self.arrow_margin,
+                    shrinkB=self.arrow_margin,
+                    zorder=1
+                )
+
+                self.ax.add_patch(arrow)
 
         # Node alpha logic
         node_alphas = {}
@@ -192,6 +252,11 @@ class MatplotlibVisualizer(VisualizerBase):
         self.sim.interface.redraw_pending = True
 
     def _on_hover(self, event):
+        now = time.time()
+        if now - self._last_hover_redraw < self._hover_redraw_interval:
+            return
+        self._last_hover_redraw = now
+
         # Tweak ms amounts to liking
         if event.inaxes != self.ax:
             self._hover_clear_timer.start(40) # ms
@@ -207,7 +272,6 @@ class MatplotlibVisualizer(VisualizerBase):
         else:
             # No node detected: schedule clear shortly
             self._hover_clear_timer.start(40)
-
 
     def _pick_node_at_event(self, event, radius_px=30):
         """
@@ -231,7 +295,6 @@ class MatplotlibVisualizer(VisualizerBase):
         if self.highlighted_node is not None:
             self.highlighted_node = None
             self.redraw()
-
 
 
     def draw_node_images(self, ax, positions, node_alphas=None):
