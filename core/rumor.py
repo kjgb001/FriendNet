@@ -128,7 +128,7 @@ class Rumor():
         return edge_count
 
     def __str__(self):
-        return self.rumor
+        return f"{self.spreader} said \"{self.rumor}\" about {self.target}"
 
 
     def summary(self):

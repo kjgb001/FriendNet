@@ -326,8 +326,11 @@ def set_sim_speed(sim, interval):
 def print_rumors(rumors):
     if len(rumors) < 1:
         logger.info("No rumors to show.\n")
+        return
+    logger.info("")
     for i in rumors:
         logger.info(i)
+    logger.info("")
 
 
 def change_view(interface, graphs, mode: str):
