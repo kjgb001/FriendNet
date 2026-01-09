@@ -42,6 +42,8 @@ COMMAND_MAP = {
     "stop": stop_sim,
     "tick": sim_tick,
     "speed": set_sim_speed,
+
+    "sim_init": sim_init, # TODO: Complete this command for the startup GUI to use
     
     # add more commands
 }

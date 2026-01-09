@@ -18,16 +18,20 @@ def main():
     parser = Parser()
     interface = Interface(parser)
 
-    # Use args to set graph types
-    graphs = build_graphs(args.rep, load_list)
-
-    # Start simulation with args
+    # Start simulation with args if populate
     populate = args.populate
     location = args.location
-    sim = Simulation(graphs, interface, populate if populate else None, location)
+    if populate:
+        # Use args to set graph types
+        graphs = build_graphs(args.rep, load_list)
+        # Sim init
+        sim = Simulation(graphs, interface, populate, location)
+        # Pass simulation to interface and start the cli interface
+        interface.sim = sim
+    else:
+        # TODO: init startup GUI, pass interface
+        pass
     
-    # Pass simulation to interface and start the cli interface
-    interface.sim = sim
     interface.run()
 
 

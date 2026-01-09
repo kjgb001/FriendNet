@@ -53,7 +53,7 @@ class Simulation(QObject):
         self.people_location = people_location
         if self.populate:
             self.count = population_count
-            self.build_network(people_location) # TODO: Accept any passed file and count
+            self.build_network(people_location)
 
         # Build image map for visualizer to pull from
         self.image_map = {
