@@ -307,14 +307,20 @@ def start_sim(sim):
     sim.start()
 
 def stop_sim(sim):
+    if not sim.timer.isActive():
+        logger.info("Simulation not running.\n")
+        return
     sim.stop()
     logger.info("Simulation stopped!\n")
 
 def sim_tick(sim):
-    timer_active = sim.step_once()
-    if timer_active:
-        logger.info("Simulation paused.")
+    sim.step_once()
     logger.info("Simulation stepped forward by one tick!\n")
+
+def set_sim_speed(sim, interval):
+    interval = float(interval)
+    sim.set_tick_interval(interval)
+    logger.info(f"Simulation tick speed set to ~{round(interval, 2)} seconds per tick. (~{round(1/interval, 2)} ticks/second)\n")
 
 
 def print_rumors(rumors):

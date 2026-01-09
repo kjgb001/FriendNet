@@ -1,5 +1,6 @@
 from .parser import Parser
 from .commands import *
+from view.controlPanel import ControlPanel
 from view.matplotlibVisualizer import MatplotlibVisualizer
 
 import logging
@@ -39,7 +40,8 @@ COMMAND_MAP = {
 
     "start": start_sim,
     "stop": stop_sim,
-    "tick": sim_tick
+    "tick": sim_tick,
+    "speed": set_sim_speed,
     
     # add more commands
 }
@@ -67,13 +69,17 @@ class Interface(QObject):
         self.prompt_shown = False
 
         self.commands = {"help", "people", "person", "kill", "generate", 
-                        "reload", "view", "rumors", "start", "stop", "tick"}
+                        "reload", "view", "rumors", "start", "stop", "tick",
+                        "speed"}
 
         self.command_requested.connect(self._handle_on_main_thread)
         
 
     def view_init(self, simulation):
         self.view = MatplotlibVisualizer(simulation)
+
+        self.controls = ControlPanel(self)
+        self.controls.show()
 
     def command_init(self):
         # Add commands based on graphs present
@@ -171,6 +177,9 @@ class Interface(QObject):
             # Command dispatch
             if command in ("start", "stop", "tick"):
                 func(self.sim)
+
+            elif command == "speed":
+                func(self.sim, *(args or []))
 
             elif command == "help":
                 func(self.sim.graphs, self.commands, *(args or []))

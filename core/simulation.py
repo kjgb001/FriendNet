@@ -10,11 +10,13 @@ import traceback
 import threading
 import time
 
-from PySide6.QtCore import QObject, QTimer, Slot
+from PySide6.QtCore import QObject, QTimer, Slot, Signal
 
 logger = logging.getLogger(__name__)
 
 class Simulation(QObject):
+    running_changed = Signal(bool) # Signal for GUI status indicator
+
     def __init__(self, graphs, interface, population_count, 
         people_location = "generated_set"): # create new args in cli.py
         super().__init__()
@@ -178,21 +180,19 @@ class Simulation(QObject):
             return
         self.interface.suppress_output()
         self.timer.start()
+        self.running_changed.emit(True)
 
     def stop(self):
         self.timer.stop()
         self.interface.resume_output()
+        self.running_changed.emit(False)
 
     def step_once(self):
-        was_active = False
         if self.timer.isActive():
             self.timer.stop()
             self.interface.resume_output()
-            was_active = True
-
+            self.stop()
         self.tick()
-
-        return was_active
 
     @Slot()
     def _on_tick(self):
