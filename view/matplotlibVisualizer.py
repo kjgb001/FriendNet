@@ -41,11 +41,6 @@ class MatplotlibVisualizer(VisualizerBase):
         def _on_close(event):
             # Tell the app to stop
             self.sim.interface.shutdown()
-            # Stop sim loop if it's running
-            try:
-                self.sim.stop_sim()
-            except Exception:
-                pass
 
         self.fig.canvas.mpl_connect("close_event", _on_close)
         self.fig.canvas.mpl_connect("motion_notify_event", self._on_hover)

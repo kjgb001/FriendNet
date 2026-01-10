@@ -1,6 +1,9 @@
 import json
 from pathlib import Path
 from core.node import Identity, Person
+import logging
+
+logger = logging.getLogger(__name__)
 
 def save_people(path: str, people: list):
     file_path = Path(path)
@@ -29,13 +32,16 @@ def load_people(path: str) -> list:
     try:
         data = json.loads(file_path.read_text())
     except (FileNotFoundError, json.JSONDecodeError) as e:
+        info = None
         if isinstance(e, json.JSONDecodeError):
-            print("Could not read JSON file.") # Replace with logging
+            logging.info("Could not read JSON file.")
         elif isinstance(e, FileNotFoundError):
-            print("File does not exist.") # Replace with logging
+            logging.info("File does not exist.")
         data = []
 
     people = []
+    if len(data) == 0:
+        return False
     for entry in data:
         identity = Identity(entry["fname"], entry["lname"], entry["gender"], entry["picture"])
         people.append(Person(identity))

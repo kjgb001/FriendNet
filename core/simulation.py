@@ -92,12 +92,12 @@ class Simulation(QObject):
             # Get people from specified file and 
             all_people = load_people("assets/people/"+file+".json")
 
-            # Checks if there are enough people for random selection (minimum of twice the chosen count), and generates the difference if not.
-            if len(all_people) < count * 2 or not all_people:
-                count_diff = (count * 2) - len(all_people)
-                self.interface.handle("generate", [count_diff, file])
-                self.interface.handle("reload")
-                all_people = load_people("assets/people/"+file+".json")
+            # Checks if there are enough people to run sim with chose population size
+            if len(all_people) < count:
+                raise RuntimeError(
+                    f"Not enough people in dataset '{file}'. "
+                    "Generate more before starting the simulation."
+                )
                 
             # Create a list of their indices
             indices = list(range(len(all_people)))

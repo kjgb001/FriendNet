@@ -43,7 +43,7 @@ COMMAND_MAP = {
     "tick": sim_tick,
     "speed": set_sim_speed,
 
-    "sim_init": sim_init, # TODO: Complete this command for the startup GUI to use
+    #"sim_init": sim_init, # TODO: Complete this command for the startup GUI to use
     
     # add more commands
 }
@@ -132,7 +132,7 @@ class Interface(QObject):
         except KeyboardInterrupt:
             logger.info("Shutting down FriendNet...\n")
             self.running = False
-            self.view.close()
+            self.shutdown()
 
 
     def shutdown(self):
@@ -143,8 +143,18 @@ class Interface(QObject):
         self.running = False
 
         # Stop simulation thread if running
-        if self.sim:
-            self.sim.stop()
+        try:
+            if self.sim:
+                self.sim.stop()
+        except:
+            pass
+
+        # Close control panel
+        try:
+            if self.controls:
+                self.controls.close()
+        except Exception:
+            pass
 
         # Close view defensively
         try:
@@ -198,6 +208,9 @@ class Interface(QObject):
 
             elif command == "reload":
                 func(self)
+
+            elif command == "generate":
+                func(self, *(args or []))
 
             else:
                 func(self, self.sim.graphs, *(args or []))

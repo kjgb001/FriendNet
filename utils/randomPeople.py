@@ -3,6 +3,9 @@ from io import BytesIO
 import requests
 import os
 from core.node import Identity, Person
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_person(fname, lname, gender, picture = None):
     identity = Identity(fname, lname, gender, picture)
@@ -10,6 +13,7 @@ def create_person(fname, lname, gender, picture = None):
 
 
 def generate_random_batch(size: int, location):
+    logger.info("\nGenerating People, Please Wait...")
     # one request, N results
     url = f"https://randomuser.me/api/?nat=us,gb,ca,au,nz&results={size}"
     resp = requests.get(url, timeout=3)
@@ -33,12 +37,18 @@ def generate_random_batch(size: int, location):
         people.append(create_person(fname, lname, gender))
         people[-1].data.picture = download_image(picture_url, people[-1], location)
 
+    logger.info("Generation Complete!\n")
     return people
 
 
 def download_image(url, person, location):
-    r = requests.get(url, timeout=5)
-    r.raise_for_status()
+    try:
+        r = requests.get(url, timeout=5)
+        r.raise_for_status()
+    except Exception as e:
+        logger.warning(f"Image download failed: {e}")
+        return None
+
 
     # Convert any format to real PNG in case API hates me
     img = Image.open(BytesIO(r.content)).convert("RGBA")

@@ -5,6 +5,9 @@ from .interface import Interface
 from .parser import Parser
 import argparse
 
+from view.startupMenu import StartupMenu
+from PySide6.QtWidgets import QApplication
+import sys
 
 def main():
     args = parse_arguments()
@@ -29,9 +32,29 @@ def main():
         # Pass simulation to interface and start the cli interface
         interface.sim = sim
     else:
-        # TODO: init startup GUI, pass interface
-        pass
-    
+        app = QApplication(sys.argv)
+
+        menu = StartupMenu(interface)
+
+        def on_start(config):
+            menu.close()
+            graphs = build_graphs(config["rep"], config["load"])
+            sim = Simulation(
+                graphs,
+                interface,
+                config["populate"],
+                config["location"]
+            )
+            interface.sim = sim
+
+            interface.run()
+
+        menu.start_requested.connect(on_start)
+        menu.show()
+
+        sys.exit(app.exec())
+        return
+
     interface.run()
 
 

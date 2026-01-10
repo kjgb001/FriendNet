@@ -97,14 +97,15 @@ def remove_person(interface, graphs, name_str):
     logger.info(f"{person} successfully removed.")
 
 
-def generate_people(interface, graphs, number, location = "generated_set"):
+def generate_people(interface, number, location = "generated_set"):
     number = int(number)
     if number > 5000:
         raise ValueError(f"Too many people to generate. Number must be five thousand or less, got {number}")
     new_people = build_set(number, location)
     save_people(f"assets/people/{location}.json", new_people)
 
-    interface.sim.all_people.extend(new_people)
+    if interface.sim:
+        interface.sim.all_people.extend(new_people)
 
     logger.info(f"{number} people successfully generated!")
 
