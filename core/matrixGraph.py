@@ -120,9 +120,14 @@ class DirectedMatrixGraph(GraphInterface):
 
         # Sets the vertex variable to the corresponding index if needed
         if not isinstance(vertex, int):
-            vertex = self.vertices.index(vertex)
+            vertex_index = self.vertices.index(vertex)
+        else:
+            vertex_index = vertex
+            vertex = self.vertices[vertex_index]
 
-        self._remove_vertex_by_index(vertex)
+        self._remove_vertex_by_index(vertex_index)
+
+        return vertex
 
     
     def _remove_vertex_by_index(self, index: int):
@@ -136,10 +141,18 @@ class DirectedMatrixGraph(GraphInterface):
         del self._index_map[self.vertices[index]]
 
         # Remove row from matrix by setting to None.
-        self.matrix[index] = None
+        for i in self.matrix[index]:
+            i = None
 
         # Remove from vertices list by setting to None.
         self.vertices[index] = None
+
+        remove_edges = []
+        for e in range(len(self.edges)):
+            if index in self.edges[e]:
+                remove_edges.append(e)
+        for i in sorted(remove_edges, reverse=True):
+            del self.edges[i]
 
     
     def _vertex_index(self, vertex) -> int:

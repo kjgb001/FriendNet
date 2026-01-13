@@ -15,7 +15,7 @@ class GraphInterface(ABC):
         pass
 
     @abstractmethod
-    def remove_edge(self, v1: Any, v2: Any) -> float:
+    def remove_edge(self, v1: Any, v2: Any) -> int | float:
         pass
 
     @abstractmethod
@@ -23,7 +23,7 @@ class GraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_edge(self, v1: Any, v2: Any) -> float:
+    def get_edge(self, v1: Any, v2: Any) -> int | float:
         pass
 
     @abstractmethod
@@ -42,10 +42,11 @@ class GraphInterface(ABC):
         return len(active)
 
     def __str__(self):
-        if not self.get_vertices():
-            return "[Empty Graph]"
-
-        active = [(i, v) for i, v in enumerate(self.get_vertices()) if v is not None] # Guard against removal logic setting Nones
+        if self.get_vertices():
+            active = [(i, v) for i, v in enumerate(self.get_vertices()) if v is not None] # Guard against removal logic setting Nones
+        else:
+            active = []
+        
         if len(active) == 0:
             return "[Empty Graph]"
 
@@ -73,7 +74,7 @@ class GraphInterface(ABC):
                     row_vals.append(f"{val:>6.2f}")  # width 6, 2 decimals
 
             rows.append(f"{i:>3} | " + " ".join(row_vals))
-
+        
         # Optional: map index, name for readability
         name_map = "\n".join(
             f"  {i:>3} = {v.data.fname} {v.data.lname}"
