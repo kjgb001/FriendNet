@@ -64,7 +64,7 @@ def parse_arguments():
     parser.add_argument(
         "--rep",
         choices=["matrix", "list"],
-        default="matrix",
+        default="list",
         help="Choose graph representation: matrix or list"
     )
 
