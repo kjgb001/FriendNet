@@ -99,7 +99,7 @@ class Interface(QObject):
 
     def run(self):
         ''' Starts the interactive cli. Calls parser then handles input while running. '''
-        logger.info("\nWelcome to FriendNet! Please enter a command (type 'help' to see commands).\n")
+        logger.info("\nWelcome to FriendNet! Please enter a command or use the GUI (type 'help' to see commands).\n")
         
         def input_loop():
             while self.running:
@@ -122,7 +122,7 @@ class Interface(QObject):
         # Start input thread
         threading.Thread(target=input_loop, daemon=True).start()
 
-        # MAIN THREAD: redraw pump
+        # Redraw pump
         try:
             while self.running:
                 if self.redraw_pending:

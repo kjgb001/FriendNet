@@ -32,7 +32,7 @@ class StartupMenu(QWidget):
         layout.addWidget(QLabel("Population Size"))
 
         self.population = QSpinBox()
-        self.population.setRange(1, 500)
+        self.population.setRange(0, 500)
         self.population.setValue(50)
         layout.addWidget(self.population)
 
@@ -100,7 +100,7 @@ class StartupMenu(QWidget):
         layout.addWidget(self.dataset_status)
 
         # Start button
-        self.start_btn = QPushButton("Start Simulation") # Assign as attribute to access in _emit_start()
+        self.start_btn = QPushButton("Launch Simulation") # Assign as attribute to access in _emit_start()
         self.start_btn.clicked.connect(self._emit_start)
         layout.addWidget(self.start_btn)
 
@@ -133,7 +133,7 @@ class StartupMenu(QWidget):
             load_list.append("directed")
 
         config = {
-            "populate": self.population.value(),
+            "populate": self.population.value() if self.population.value() > 0 else None,
             "rep": "matrix" if self.rep_matrix.isChecked() else "list",
             "load": load_list,
             "location": self.location.text()

@@ -1,6 +1,7 @@
 from core.graphInterface import GraphInterface
 from typing import Any
 
+
 class DirectedListGraph(GraphInterface):
     
     def add_vertex(self, vertex: Any) -> None:
@@ -33,6 +34,7 @@ class DirectedListGraph(GraphInterface):
     
     def get_neighbors(self, vertex: Any) -> list:
         pass
+
 
 class UndirectedListGraph(GraphInterface):
     
@@ -67,6 +69,7 @@ class UndirectedListGraph(GraphInterface):
     def get_neighbors(self, vertex: Any) -> list:
         pass
 
+
 class WeightedDirectedListGraph(GraphInterface):
     
     def add_vertex(self, vertex: Any) -> None:
@@ -99,6 +102,7 @@ class WeightedDirectedListGraph(GraphInterface):
     
     def get_neighbors(self, vertex: Any) -> list:
         pass
+    
 
 class WeightedUndirectedListGraph(GraphInterface):
     

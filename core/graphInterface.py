@@ -38,13 +38,16 @@ class GraphInterface(ABC):
         return len(self.get_edges())
 
     def __len__(self):
-        return len(self.get_vertices())
+        active = [(i, v) for i, v in enumerate(self.get_vertices()) if v is not None]
+        return len(active)
 
     def __str__(self):
         if not self.get_vertices():
             return "[Empty Graph]"
 
-        active = [(i, v) for i, v in enumerate(self.get_vertices()) if v is not None]
+        active = [(i, v) for i, v in enumerate(self.get_vertices()) if v is not None] # Guard against removal logic setting Nones
+        if len(active) == 0:
+            return "[Empty Graph]"
 
         return f"Vertices: {len(active)}, Edges: {len(self.get_edges())}"
 

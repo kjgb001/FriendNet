@@ -205,7 +205,7 @@ class DirectedMatrixGraph(GraphInterface):
 
 
     def get_vertices(self):
-        return self.vertices
+        return self.vertices if self.vertices else []
 
 
     def get_neighbors(self, vertex):

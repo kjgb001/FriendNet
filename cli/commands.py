@@ -361,10 +361,13 @@ def change_view(interface, graphs, mode: str):
 def print_people(graphs):
     people = graphs["friends"].get_vertices()
 
-    logger.info("\nAll people present:\n")
-    for person in people:
-        if person:
-            logger.info(f"    {person}")
+    if people:
+        logger.info("\nAll people present:\n")
+        for person in people:
+            if person:
+                logger.info(f"    {person}")
+    else:
+        logger.info("\nNo people present.")
     logger.info("")
 
 
@@ -401,7 +404,15 @@ def help_user(graphs, commands, query = None):
                 case "rumors":
                     logger.info("Prints full history of rumors in simulation instance. Takes zero arguments.")
                 case "view":
-                    logger.info("Takes on argument: 'friends' to see friendships, 'gossip' to see the latest rumor, and 'trust' to see trust levels")
+                    logger.info("Takes on argument: 'friends' to see friendships, 'gossip' to see the latest rumor, and 'trust' to see trust levels.")
+                case "start":
+                    logger.info("Starts the simulation tick loop to mutate the graphs over time.")
+                case "stop":
+                    logger.info("Ends the simulation tick loop.")
+                case "tick":
+                    logger.info("Advances the simulation tick loop by one tick. Stops the sim loop before doing so if it was already running.")
+                case "speed":
+                    logger.info("Sets the simulation tick loop speed in seconds per tick.")
                 case _:
                     raise ValueError(f"help: command '{query}' not found.")
         else:
@@ -415,7 +426,8 @@ def help_user(graphs, commands, query = None):
             "strengthen", "weaken",
             "trust", "distrust",
             "spread", "rumors",
-            "view"
+            "view", "start", "stop",
+            "tick", "speed"
         ]
         # Print the commands that are available based on graphs
         logger.info("\nAvailable commands:\n")

@@ -79,12 +79,13 @@ class MatplotlibVisualizer(VisualizerBase):
             rumor = None
         else:
             rumor = self.rumor  # single source of truth
-            
+
         # Get graph in networkx form, and set rumor
         nx_graph = self.gen_nx_graphs(self.sim, self.page, rumor)
         
         # Update positions only if they don't exist or node count changes
         if self.positions is None or len(self.positions) != nx_graph.number_of_nodes():
+            count = len(self.sim.graphs["friends"].get_vertices())
             # Build a graph containing ONLY friend edges
             layout_graph = nx.Graph()
             layout_graph.add_nodes_from(nx_graph.nodes)
@@ -97,10 +98,10 @@ class MatplotlibVisualizer(VisualizerBase):
                 elif w > 1.55:
                     layout_graph.add_edge(u, v, weight = w - 1.0)
 
-            scale = 2 + math.log(self.sim.count) # Area grows with log(n)
+            scale = 2 + math.log(count) # Area grows with log(n)
             # Compute the theoretical FR optimal edge length
             area = (2 * scale) ** 2
-            k = 0.75 * math.sqrt(area / self.sim.count)
+            k = 0.75 * math.sqrt(area / count)
             # Increase k by a factor proportional to the portrait radius
             k *= 1 + (self.portrait_radius / 40) # denominator can be adjusted
 
@@ -116,11 +117,12 @@ class MatplotlibVisualizer(VisualizerBase):
 
         pad = 0.5  # tweak for breathing room
 
-        self.ax.set_xlim(min(xs) - pad, max(xs) + pad)
-        self.ax.set_ylim(min(ys) - pad, max(ys) + pad)
+        if xs and ys:
+            self.ax.set_xlim(min(xs) - pad, max(xs) + pad)
+            self.ax.set_ylim(min(ys) - pad, max(ys) + pad)
 
-        self.ax.set_aspect("equal", adjustable="box")
-        self.ax.axis("off")
+            self.ax.set_aspect("equal", adjustable="box")
+            self.ax.axis("off")
 
         # Highlight visibility logic
         highlight = self.highlighted_node

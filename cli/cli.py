@@ -24,7 +24,7 @@ def main():
     # Start simulation with args if populate
     populate = args.populate
     location = args.location
-    if populate:
+    if args:
         # Use args to set graph types
         graphs = build_graphs(args.rep, load_list)
         # Sim init
@@ -64,7 +64,7 @@ def parse_arguments():
     parser.add_argument(
         "--rep",
         choices=["matrix", "list"],
-        default="list",
+        default="matrix",
         help="Choose graph representation: matrix or list"
     )
 

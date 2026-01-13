@@ -197,7 +197,7 @@ class ControlPanel(QWidget):
         # Minimal, readable display
         self.rumor_label.setText(
             f"{rumor.spreader} -> {rumor.target}\n"
-            f"“{rumor.rumor}”"
+            f"“{rumor.rumor}”\n"
             f"Rumor {self.rumor_index + 1} / {len(self.interface.sim.rumors)}"
         )
 
