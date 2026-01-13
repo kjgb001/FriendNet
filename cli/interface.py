@@ -59,6 +59,9 @@ class Interface(QObject):
     ''' CLI Interface '''
 
     command_requested = Signal(str, object)
+    view_changed = Signal(str)
+    rumor_selected = Signal(object)
+    rumor_added = Signal()
 
     def __init__(self, parser: Parser):
         super().__init__()
@@ -123,8 +126,7 @@ class Interface(QObject):
         try:
             while self.running:
                 if self.redraw_pending:
-                    rumor = self.sim.rumors[-1] if self.sim.rumors else None
-                    self.view.redraw(rumor)
+                    self.view.redraw()
                     self.redraw_pending = False
 
                 self.view.pump_events(0.01)
@@ -201,7 +203,11 @@ class Interface(QObject):
 
             elif command == "spread":
                 rumor = func(self, self.sim.graphs, *(args or []))
+                if not rumor:
+                    return # Prevent edgeless rumors from persisting
                 self.sim.rumors.append(rumor)
+                self.view.set_rumor(rumor)
+                self.rumor_added.emit()
 
             elif command == "rumors":
                 func(self.sim.rumors)
@@ -212,6 +218,11 @@ class Interface(QObject):
             elif command == "generate":
                 func(self, *(args or []))
 
+            elif command == "view":
+                success = func(self, self.sim.graphs, *(args or []))
+                if success:
+                    self.view_changed.emit(args[0])
+
             else:
                 func(self, self.sim.graphs, *(args or []))
 
@@ -221,12 +232,17 @@ class Interface(QObject):
 
         except Exception as e:
             logger.info(f"[Error] {e}")
-            traceback.print_exc()  # DEBUG
+            #traceback.print_exc()  # DEBUG
         
         finally:
             if source == "cli":
                 self.prompt_shown = False
 
+    def select_rumor(self, rumor):
+        if rumor is None:
+            return
+        self.view.set_rumor(rumor)
+        self.rumor_selected.emit(rumor)
 
     def suppress_output(self):
         logger_mod.suppress_commands = True

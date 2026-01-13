@@ -69,16 +69,18 @@ class MatplotlibVisualizer(VisualizerBase):
 
         return portrait_radius, arrow_margin
 
+    def set_rumor(self, rumor):
+        self.rumor = rumor
+        self.redraw()
 
-    def redraw(self, rumor = None):
-        # Get graph in networkx form, and determine if rumor should be passed as is
+
+    def redraw(self):
         if self.page != 1:
             rumor = None
         else:
-            if not self.rumor:
-                self.rumor = self.sim.rumors[-1] # set to latest rumor if none already set
-            rumor = self.rumor
-
+            rumor = self.rumor  # single source of truth
+            
+        # Get graph in networkx form, and set rumor
         nx_graph = self.gen_nx_graphs(self.sim, self.page, rumor)
         
         # Update positions only if they don't exist or node count changes

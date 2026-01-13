@@ -335,31 +335,27 @@ def print_rumors(rumors):
 
 
 def change_view(interface, graphs, mode: str):
-    page = 0
-    already_set = False
     if mode == "friends":
-        if interface.view.page == 0:
-            already_set = True
-        else:
-            interface.view.page = 0
+        new_page = 0
     elif mode == "gossip":
         if len(interface.sim.rumors) < 1:
             raise ValueError("No gossip to track.")
-        if interface.view.page == 1:
-            already_set = True
-        else:
-            interface.view.page = 1
+        new_page = 1
     elif mode == "trust":
-        if interface.view.page == 2:
-            already_set = True
-        else:
-            interface.view.page = 2
+        new_page = 2
     else:
-        raise ValueError(f"Incorrect view mode entered. Options: friends, gossip, trust. Entered: {mode}")
+        raise ValueError(
+            f"Incorrect view mode entered. "
+            f"Options: friends, gossip, trust. Entered: {mode}"
+        )
 
-    if already_set:
-        raise ValueError(f"View {mode} mode already active.")
-    
+    # No-op: already on this page
+    if interface.view.page == new_page:
+        logger.info(f"View '{mode}' already active.")
+        return False
+
+    interface.view.page = new_page
+    return True
 
 
 def print_people(graphs):

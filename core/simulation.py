@@ -215,9 +215,10 @@ class Simulation(QObject):
         return math.log(1 + k * x) / math.log(1 + k)
         
     def tick(self):
-        # print("TICK") #DEBUG
+        # More options should be added (Trust modification is prio)
+
         # Mutation is chosen by a random int from these two lists
-        unweighted = [0, 1]
+        unweighted = [0, 1, 4]
         weighted   = [2, 3] if self.weighted_graphs else []
         options = unweighted + weighted
 
@@ -226,6 +227,7 @@ class Simulation(QObject):
             1: 1, # Remove connection
             2: 5, # Strengthen connection
             3: 4, # Weaken connection
+            4: 2, # Rumor spread
         }
         mutation_weights = [mutation_weights_map[o] for o in options]
         mutation_choice = random.choices(options, weights=mutation_weights, k=1)[0]
@@ -338,6 +340,59 @@ class Simulation(QObject):
                 self.interface.handle("weaken", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
                         f"{target.data.fname.lower()} {target.data.lname.lower()}", 0.05])
                 # print("weaken successful") # DEBUG
+
+            case 4: # Spread rumor
+                spreader = person
+
+                candidates = []
+                enemies = []
+
+                for p in present_people:
+                    if p == spreader:
+                        continue
+
+                    edge = self.graphs["friends"].get_edge(spreader, p)
+
+                    # Exclude friends
+                    if edge is not None:
+                        if self.weighted_graphs:
+                            if edge > 1.55:
+                                continue  # friend
+                            elif edge < 1.45:
+                                enemies.append(p)
+                        else:
+                            continue  # any edge counts as friend in unweighted
+                    else:
+                        candidates.append(p)
+
+                # Prefer enemies if weighted
+                if self.weighted_graphs and enemies:
+                    target = random.choice(enemies)
+                elif candidates:
+                    target = random.choice(candidates)
+                else:
+                    return  # no valid target
+
+                rumor_text = self._generate_rumor_text(spreader, target)
+
+                self.interface.handle(
+                    "spread",
+                    [
+                        f"{spreader.data.fname.lower()} {spreader.data.lname.lower()}",
+                        f"{target.data.fname.lower()} {target.data.lname.lower()}",
+                        rumor_text,
+                    ],
+                )
+
+
+    def _generate_rumor_text(self, spreader, target):
+        templates = [
+            f"{target.data.fname} can't be trusted.",
+            f"Word is {target.data.fname} has been acting shady lately.",
+            f"Apparently {target.data.fname} crossed the wrong people.",
+            f"I heard something bad about {target.data.fname}.",
+        ]
+        return random.choice(templates)
 
 
     def reload_all_people(self, file: str = None):

@@ -49,6 +49,9 @@ class VisualizerBase(ABC):
 
     def _gossip_graph(self, simulation, graph, rumor):
         vertices = rumor.graph.get_vertices()
+
+        if not rumor.graph.get_edges():
+            return
         for (a, b) in rumor.graph.get_edges():
             u = vertices[a]
             v = vertices[b]
