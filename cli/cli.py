@@ -24,7 +24,7 @@ def main():
     # Start simulation with args if populate
     populate = args.populate
     location = args.location
-    if args:
+    if populate or populate == 0:
         # Use args to set graph types
         graphs = build_graphs(args.rep, load_list)
         # Sim init
