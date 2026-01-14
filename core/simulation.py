@@ -222,6 +222,7 @@ class Simulation(QObject):
         weighted   = [2, 3] if self.weighted_graphs else []
         options = unweighted + weighted
 
+        # Determine likelihood of selection
         mutation_weights_map = {
             0: 3, # Add connection
             1: 1, # Remove connection
@@ -346,7 +347,7 @@ class Simulation(QObject):
 
                 candidates = []
                 enemies = []
-
+                
                 for p in present_people:
                     if p == spreader:
                         continue
@@ -354,7 +355,7 @@ class Simulation(QObject):
                     edge = self.graphs["friends"].get_edge(spreader, p)
 
                     # Exclude friends
-                    if edge is not None:
+                    if edge is not None and edge != 0:
                         if self.weighted_graphs:
                             if edge > 1.55:
                                 continue  # friend
