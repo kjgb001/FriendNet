@@ -144,7 +144,6 @@ class Simulation(QObject):
 
         except Exception as e:
             logger.info(f"[Error] Simulation failed to generate network (either partially or fully), due to: {e}")
-            #traceback.print_exc() # DEBUG
 
         finally:
             self.interface.resume_output()
@@ -241,7 +240,6 @@ class Simulation(QObject):
 
         match mutation_choice:
             case 0: # Add connection (Biased towards mutuals)
-                # print("attempting connection") # DEBUG
                 neighbors = set(self.graphs["friends"].get_neighbors(person))
                 if not neighbors:
                     return
@@ -267,10 +265,8 @@ class Simulation(QObject):
 
                 self.interface.handle("connect", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
                         f"{target.data.fname.lower()} {target.data.lname.lower()}", weight])
-                # print("New conncetion Successful!") # DEBUG
 
             case 1: # Remove connection (Closer to neutral == more likely to be pruned)
-                # print("attempting disconnection") # DEBUG
                 neighbors = self.graphs["friends"].get_neighbors(person)
                 if not neighbors or len(neighbors) <= 1:
                     return
@@ -292,10 +288,8 @@ class Simulation(QObject):
 
                 self.interface.handle("disconnect", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
                         f"{target.data.fname.lower()} {target.data.lname.lower()}"])
-                # print("disconnection succesful") # DEBUG
 
             case 2: # Strengthen connection (log curve rng)
-                # print("attempting strengthen") # DEBUG
                 neighbors = self.graphs["friends"].get_neighbors(person)
                 if not neighbors:
                     return
@@ -316,10 +310,8 @@ class Simulation(QObject):
 
                 self.interface.handle("strengthen", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
                         f"{target.data.fname.lower()} {target.data.lname.lower()}", 0.05])
-                # print("strengthen successful") # DEBUG
 
             case 3: # Weaken connection (log curve rng)
-                # print("attempting weaken") # DEBUG
                 neighbors = self.graphs["friends"].get_neighbors(person)
                 if not neighbors:
                     return
@@ -340,7 +332,6 @@ class Simulation(QObject):
 
                 self.interface.handle("weaken", [f"{person.data.fname.lower()} {person.data.lname.lower()}", 
                         f"{target.data.fname.lower()} {target.data.lname.lower()}", 0.05])
-                # print("weaken successful") # DEBUG
 
             case 4: # Spread rumor
                 spreader = person

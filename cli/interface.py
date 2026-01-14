@@ -99,7 +99,7 @@ class Interface(QObject):
 
     def run(self):
         ''' Starts the interactive cli. Calls parser then handles input while running. '''
-        logger.info("\nWelcome to FriendNet! Please enter a command or use the GUI (type 'help' to see commands).\n")
+        logger.info("\nWelcome to FriendNet! Please enter a command and/or use the GUI (type 'help' to see commands).\n")
         
         def input_loop():
             while self.running:
@@ -116,7 +116,7 @@ class Interface(QObject):
                         break  # EOF
 
                     command, args = self.parser.parse(line)
-                    #print("EMITTING COMMAND") # DEBUG
+            
                     self.command_requested.emit(command, args)
 
         # Start input thread
@@ -173,14 +173,13 @@ class Interface(QObject):
 
     @Slot(str, object)
     def _handle_on_main_thread(self, command, args):
-        #print("RECEIVED COMMAND") # DEBUG
+        
         self.handle(command, args, source="cli")
 
     def handle(self, command, args=None, source="sim"):
         """
         Execute a command that mutates simulation state.
-        """
-        #print(f"[DEBUG] suppress={logger_mod.suppress_commands}, cmd={command}") # DEBUG
+        """ 
         try:
             if command not in self.commands:
                 logger.info(f"Unknown command: {command}")
@@ -232,7 +231,6 @@ class Interface(QObject):
 
         except Exception as e:
             logger.info(f"[Error] {e}")
-            #traceback.print_exc()  # DEBUG
         
         finally:
             if source == "cli":
