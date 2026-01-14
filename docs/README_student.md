@@ -36,12 +36,12 @@ A visualization window dynamically updates with the social network as gossip spr
 
 Install dependencies:
 ```bash
-pip install networkx matplotlib PySide6 pytest
+python3 -m pip install -r requirements.txt
 ```
 
 Run the simulation:
 ```bash
-python run.py
+python3 run.py
 ```
 
 # License

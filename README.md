@@ -16,9 +16,9 @@ Each lab builds on the last:
 3. **Weighted Graphs** — Trust and relationship strength
 
 The simulation responds in real time to CLI commands like:  
-connect Alice Bob
-spread_rumor Alice Bob "Bob smells like rancid milk"
-strengthen Alice Bob 5
+- connect Alice Bob  
+- spread_rumor Alice Bob "Bob smells like rancid milk"  
+- strengthen Alice Bob 5  
 
 A visualization window dynamically updates with the social network as gossip spreads and relationships form, strengthen, decay, and dissolve.
 
@@ -52,12 +52,12 @@ cd FriendNet
 
 Install dependencies:
 ```bash
-pip install networkx matplotlib PySide6 pytest
+python3 -m pip install -r requirements.txt
 ```
 
 Run the simulation:
 ```bash
-python run.py
+python3 run.py
 ```
 
 Run tests:
@@ -67,7 +67,7 @@ pytest
 
 To generate a student-facing copy of FriendNet, run:
 ```bash
-python build_student.py
+python3 build_student.py
 ```
 The output will appear in the
 "student/"
@@ -75,7 +75,7 @@ directory
 
 ## Developer Notes
 
-- Visualization classes are modular, just build it around the abstract base class.
+- This currently has only been tested on Linux, but *should* be OS agnostic.
 
 - pytest is used internally for autograding, but students write their own tests with unittest.
 
